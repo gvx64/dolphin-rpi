@@ -20,6 +20,7 @@ typedef Bit64u bx_address;
 #else
 
 #include <stdint.h>
+#include <stdbool.h> //gvx64 rollforward to 5.0-12188 - implement .rvz support
 
 typedef int8_t Bit8s;
 typedef int16_t Bit16s;

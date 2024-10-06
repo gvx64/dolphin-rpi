@@ -63,7 +63,8 @@ std::unique_ptr<BootParameters> BootParameters::GenerateFromFile(const std::stri
   std::transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
 
   static const std::unordered_set<std::string> disc_image_extensions = {
-      {".gcm", ".iso", ".tgc", ".wbfs", ".ciso", ".gcz"}};
+//gvx64      {".gcm", ".iso", ".tgc", ".wbfs", ".ciso", ".gcz"}};
+      {".gcm", ".iso", ".tgc", ".wbfs", ".ciso", ".gcz", ".wia", ".rvz",}}; //gvx64 rollforward to 5.0-12188 - implement .rvz support
   if (disc_image_extensions.find(extension) != disc_image_extensions.end() || is_drive)
   {
     auto volume = DiscIO::CreateVolumeFromFilename(path);

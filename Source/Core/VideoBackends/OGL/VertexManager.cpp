@@ -13,6 +13,7 @@
 #include "Common/FileUtil.h"
 #include "Common/GL/GLExtensions/GLExtensions.h"
 #include "Common/StringUtil.h"
+#include "Common/GL/GLInterfaceBase.h" //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
 
 #include "VideoBackends/OGL/BoundingBox.h"
 #include "VideoBackends/OGL/ProgramShaderCache.h"
@@ -137,7 +138,8 @@ void VertexManager::Draw(u32 stride)
     static_cast<Renderer*>(g_renderer.get())->SetGenerationMode();
 }
 
-void VertexManager::vFlush()
+//gvx64 void VertexManager::vFlush()
+void VertexManager::vFlush(bool useDstAlpha) //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
 {
   GLVertexFormat* nativeVertexFmt = (GLVertexFormat*)VertexLoaderManager::GetCurrentVertexFormat();
   u32 stride = nativeVertexFmt->GetVertexStride();
@@ -150,7 +152,19 @@ void VertexManager::vFlush()
 
   PrepareDrawBuffers(stride);
 
-  ProgramShaderCache::SetShader(m_current_primitive_type);
+  // Makes sure we can actually do Dual source blending
+  bool dualSourcePossible = g_ActiveConfig.backend_info.bSupportsDualSourceBlend; //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
+
+  // If host supports GL_ARB_blend_func_extended, we can do dst alpha in
+  // the same pass as regular rendering.
+  if (useDstAlpha && dualSourcePossible)  //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
+  { 
+    ProgramShaderCache::SetShader(DSTALPHA_DUAL_SOURCE_BLEND, m_current_primitive_type);  //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
+  }
+  else
+  {
+    ProgramShaderCache::SetShader(DSTALPHA_NONE, m_current_primitive_type);  //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
+  }
 
   // upload global constants
   ProgramShaderCache::UploadConstants();
@@ -164,6 +178,38 @@ void VertexManager::vFlush()
   }
 
   Draw(stride);
+
+  // If the GPU does not support dual-source blending, we can approximate the effect by drawing
+  // the object a second time, with the write mask set to alpha only using a shader that outputs
+  // the destination/constant alpha value (which would normally be SRC_COLOR.a).
+  //
+  // This is also used when logic ops and destination alpha is enabled, since we can't enable
+  // blending and logic ops concurrently.
+  bool logic_op_enabled = (bpmem.blendmode.logicopenable && !bpmem.blendmode.blendenable &&
+                           GLInterface->GetMode() == GLInterfaceMode::MODE_OPENGL);  //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
+  if (useDstAlpha && (!dualSourcePossible || logic_op_enabled))  //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
+  {
+    ProgramShaderCache::SetShader(DSTALPHA_ALPHA_PASS, m_current_primitive_type);  //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
+
+    // only update alpha
+    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_TRUE);  //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
+
+    glDisable(GL_BLEND);  //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
+
+    if (logic_op_enabled)  //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
+      glDisable(GL_COLOR_LOGIC_OP);  //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
+
+    Draw(stride);  //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
+
+    // restore color mask
+    g_renderer->SetColorMask();  //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
+
+    if (bpmem.blendmode.blendenable || bpmem.blendmode.subtract)  //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
+      glEnable(GL_BLEND); //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
+ 
+    if (logic_op_enabled)  //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
+      glEnable(GL_COLOR_LOGIC_OP);  //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
+  }  //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
 
   if (::BoundingBox::active && !g_Config.BBoxUseFragmentShaderImplementation())
   {

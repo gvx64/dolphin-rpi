@@ -74,7 +74,8 @@ public:
   virtual void SetViewport() {}
   virtual void SetFullscreen(bool enable_fullscreen) {}
   virtual bool IsFullscreen() const { return false; }
-  virtual void ApplyState() {}
+//gvx64  virtual void ApplyState() {}
+  virtual void ApplyState(bool bUseDstAlpha) {} //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
   virtual void RestoreState() {}
   virtual void ResetAPIState() {}
   virtual void RestoreAPIState() {}

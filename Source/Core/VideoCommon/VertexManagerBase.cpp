@@ -300,9 +300,13 @@ void VertexManagerBase::Flush()
     GeometryShaderManager::SetConstants();
     PixelShaderManager::SetConstants();
 
+    bool useDstAlpha = bpmem.dstalpha.enable && bpmem.blendmode.alphaupdate &&
+                       bpmem.zcontrol.pixel_format == PEControl::RGBA6_Z24; //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
+
     if (PerfQueryBase::ShouldEmulate())
       g_perf_query->EnableQuery(bpmem.zcontrol.early_ztest ? PQG_ZCOMP_ZCOMPLOC : PQG_ZCOMP);
-    g_vertex_manager->vFlush();
+//gvx64    g_vertex_manager->vFlush();
+    g_vertex_manager->vFlush(useDstAlpha);  //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
     if (PerfQueryBase::ShouldEmulate())
       g_perf_query->DisableQuery(bpmem.zcontrol.early_ztest ? PQG_ZCOMP_ZCOMPLOC : PQG_ZCOMP);
   }

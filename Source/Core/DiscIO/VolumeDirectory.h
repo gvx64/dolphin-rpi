@@ -44,6 +44,7 @@ public:
   std::vector<Partition> GetPartitions() const override;
   Partition GetGamePartition() const override;
 
+  const FileSystem* GetFileSystem(const Partition& partition = PARTITION_NONE) const override {}; //gvx64 rollforward to 5.0-12188 - implement .rvz support
   std::string GetGameID(const Partition& partition = PARTITION_NONE) const override;
   void SetGameID(const std::string& id);
 

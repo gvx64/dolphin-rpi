@@ -33,9 +33,11 @@ void ShaderCache<Uid>::Clear()
 }
 
 template <typename Uid>
-bool ShaderCache<Uid>::SetShader(u32 primitive_type)
+//gvx64 bool ShaderCache<Uid>::SetShader(u32 primitive_type)
+bool ShaderCache<Uid>::SetShader(DSTALPHA_MODE dst_alpha_mode, u32 primitive_type) //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
 {
-  Uid uid = GetUid(primitive_type, APIType::OpenGL);
+//gvx64  Uid uid = GetUid(primitive_type, APIType::OpenGL);
+  Uid uid = GetUid(dst_alpha_mode, primitive_type, APIType::OpenGL); //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
 
   // Check if the shader is already set
   if (m_last_entry)

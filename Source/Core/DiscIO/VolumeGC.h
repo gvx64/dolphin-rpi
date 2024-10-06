@@ -24,13 +24,15 @@ enum class Language;
 enum class Region;
 enum class Platform;
 
-class VolumeGC : public Volume
+//gvx64 class VolumeGC : public Volume
+class VolumeGC : public VolumeDisc //gvx64 rollforward to 5.0-12188 - implement .rvz support
 {
 public:
   VolumeGC(std::unique_ptr<BlobReader> reader);
   ~VolumeGC();
   bool Read(u64 _Offset, u64 _Length, u8* _pBuffer,
             const Partition& partition = PARTITION_NONE) const override;
+  const FileSystem* GetFileSystem(const Partition& partition = PARTITION_NONE) const override {}; //gvx64 rollforward to 5.0-12188 - implement .rvz support
   std::string GetGameID(const Partition& partition = PARTITION_NONE) const override;
   std::string GetMakerID(const Partition& partition = PARTITION_NONE) const override;
   std::optional<u16> GetRevision(const Partition& partition = PARTITION_NONE) const override;

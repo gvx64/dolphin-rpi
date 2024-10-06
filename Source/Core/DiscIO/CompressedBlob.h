@@ -51,6 +51,10 @@ public:
   BlobType GetBlobType() const override { return BlobType::GCZ; }
   u64 GetDataSize() const override { return m_header.data_size; }
   u64 GetRawSize() const override { return m_file_size; }
+  bool IsDataSizeAccurate() const override { return true; } //gvx64 rollforward to 5.0-12188 - implement .rvz support
+
+  u64 GetBlockSize() const override { return m_header.block_size; } //gvx64 rollforward to 5.0-12188 - implement .rvz support
+  bool HasFastRandomAccessInBlock() const override { return false; } //gvx64 rollforward to 5.0-12188 - implement .rvz support
   u64 GetBlockCompressedSize(u64 block_num) const;
   bool GetBlock(u64 block_num, u8* out_ptr) override;
 

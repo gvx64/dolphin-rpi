@@ -62,8 +62,10 @@ public:
   };
 
   static PCacheEntry GetShaderProgram();
-  static SHADER* SetShader(u32 primitive_type);
-  static void GetShaderId(SHADERUID* uid, u32 primitive_type);
+//gvx64  static SHADER* SetShader(u32 primitive_type);
+//gvx64  static void GetShaderId(SHADERUID* uid, u32 primitive_type);
+  static SHADER* SetShader(DSTALPHA_MODE dstAlphaMode, u32 primitive_type); //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
+  static void GetShaderId(SHADERUID* uid, DSTALPHA_MODE dstAlphaMode, u32 primitive_type); //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
 
   static bool CompileShader(SHADER& shader, const std::string& vcode, const std::string& pcode,
                             const std::string& gcode = "");

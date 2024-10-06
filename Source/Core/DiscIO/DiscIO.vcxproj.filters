@@ -37,7 +37,7 @@
       <Filter>NAND</Filter>
     </ClCompile>
     <ClCompile Include="Blob.cpp">
-      <Filter>Volume\Blob</Filter>
+      <Filter>wVolume\Blob</Filter>
     </ClCompile>
     <ClCompile Include="CISOBlob.cpp">
       <Filter>Volume\Blob</Filter>
@@ -132,6 +132,26 @@
       <Filter>Volume</Filter>
     </ClInclude>
     <ClInclude Include="TGCBlob.h">
+      <Filter>Volume\Blob</Filter>
+    </ClInclude>
+    <ClCompile Include="WIABlob.cpp">
+      <Filter>Volume\Blob</Filter>
+    </ClCompile>
+    <ClCompile Include="LaggedFibonacciGenerator.cpp">
+      <Filter>Volume\Blob</Filter>
+    </ClCompile>
+    <ClCompile Include="WIACompression.cpp">
+      <Filter>Volume\Blob</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="WIABlob.h">
+      <Filter>Volume\Blob</Filter>
+    </ClInclude>
+    <ClInclude Include="LaggedFibonacciGenerator.h">
+      <Filter>Volume\Blob</Filter>
+    </ClInclude>
+    <ClInclude Include="WIACompression.h">
       <Filter>Volume\Blob</Filter>
     </ClInclude>
   </ItemGroup>

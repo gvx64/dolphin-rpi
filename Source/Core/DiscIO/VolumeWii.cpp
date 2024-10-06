@@ -8,6 +8,7 @@
 #include <array>
 #include <cstddef>
 #include <cstring>
+#include <future> //gvx64 rollforward to 5.0-12188 - implement .rvz support
 #include <map>
 #include <mbedtls/aes.h>
 #include <mbedtls/sha1.h>
@@ -17,6 +18,10 @@
 #include <utility>
 #include <vector>
 
+#include <mbedtls/aes.h> //gvx64 rollforward to 5.0-12188 - implement .rvz support
+#include <mbedtls/sha1.h> //gvx64 rollforward to 5.0-12188 - implement .rvz support
+
+#include "Common/Align.h" //gvx64 rollforward to 5.0-12188 - implement .rvz support
 #include "Common/Assert.h"
 #include "Common/CommonTypes.h"
 #include "Common/Logging/Log.h"
@@ -38,7 +43,10 @@ VolumeWii::VolumeWii(std::unique_ptr<BlobReader> reader)
 {
   _assert_(m_pReader);
 
-  if (m_pReader->ReadSwapped<u32>(0x60) != u32(0))
+
+  m_encrypted = m_pReader->ReadSwapped<u32>(0x60) == u32(0); //gvx64 rollforward to 5.0-12188 - implement .rvz support
+//gvx64  if (m_pReader->ReadSwapped<u32>(0x60) != u32(0))
+  if ( !m_encrypted ) //gvx64 rollforward to 5.0-12188 - implement .rvz support
   {
     // No partitions - just read unencrypted data like with a GC disc
     return;
@@ -171,6 +179,12 @@ bool VolumeWii::Read(u64 _ReadOffset, u64 _Length, u8* _pBuffer, const Partition
   return true;
 }
 
+bool VolumeWii::IsEncryptedAndHashed() const //gvx64 rollforward to 5.0-12188 - implement .rvz support
+{
+  return m_encrypted;
+}
+
+
 std::vector<Partition> VolumeWii::GetPartitions() const
 {
   std::vector<Partition> partitions;
@@ -204,7 +218,8 @@ const IOS::ES::TMDReader& VolumeWii::GetTMD(const Partition& partition) const
   return it != m_partition_tmds.end() ? it->second : INVALID_TMD;
 }
 
-u64 VolumeWii::PartitionOffsetToRawOffset(u64 offset, const Partition& partition)
+//gvx64 u64 VolumeWii::PartitionOffsetToRawOffset(u64 offset, const Partition& partition)
+u64 VolumeWii::PartitionOffsetToRawOffset(u64 offset, const Partition& partition) const //gvx64 rollforward to 5.0-12188 - implement .rvz support
 {
   if (partition == PARTITION_NONE)
     return offset;
@@ -395,6 +410,163 @@ bool VolumeWii::CheckIntegrity(const Partition& partition) const
   }
 
   return true;
+}
+
+//gvx64 rollforward to 5.0-12188 - implement .rvz support (new content through to end of file)
+bool VolumeWii::HashGroup(const std::array<u8, BLOCK_DATA_SIZE> in[BLOCKS_PER_GROUP],
+                          HashBlock out[BLOCKS_PER_GROUP],
+                          const std::function<bool(size_t block)>& read_function)
+{
+  std::array<std::future<void>, BLOCKS_PER_GROUP> hash_futures;
+  bool success = true;
+
+  for (size_t i = 0; i < BLOCKS_PER_GROUP; ++i)
+  {
+    if (read_function && success)
+      success = read_function(i);
+
+    hash_futures[i] = std::async(std::launch::async, [&in, &out, &hash_futures, success, i]() {
+      const size_t h1_base = Common::AlignDown(i, 8);
+
+      if (success)
+      {
+        // H0 hashes
+        for (size_t j = 0; j < 31; ++j)
+          mbedtls_sha1_ret(in[i].data() + j * 0x400, 0x400, out[i].h0[j]);
+
+        // H0 padding
+        std::memset(out[i].padding_0, 0, sizeof(HashBlock::padding_0));
+
+        // H1 hash
+        mbedtls_sha1_ret(reinterpret_cast<u8*>(out[i].h0), sizeof(HashBlock::h0),
+                         out[h1_base].h1[i - h1_base]);
+      }
+
+      if (i % 8 == 7)
+      {
+        for (size_t j = 0; j < 7; ++j)
+          hash_futures[h1_base + j].get();
+
+        if (success)
+        {
+          // H1 padding
+          std::memset(out[h1_base].padding_1, 0, sizeof(HashBlock::padding_1));
+
+          // H1 copies
+          for (size_t j = 1; j < 8; ++j)
+            std::memcpy(out[h1_base + j].h1, out[h1_base].h1, sizeof(HashBlock::h1));
+
+          // H2 hash
+          mbedtls_sha1_ret(reinterpret_cast<u8*>(out[i].h1), sizeof(HashBlock::h1),
+                           out[0].h2[h1_base / 8]);
+        }
+
+        if (i == BLOCKS_PER_GROUP - 1)
+        {
+          for (size_t j = 0; j < 7; ++j)
+            hash_futures[j * 8 + 7].get();
+
+          if (success)
+          {
+            // H2 padding
+            std::memset(out[0].padding_2, 0, sizeof(HashBlock::padding_2));
+
+            // H2 copies
+            for (size_t j = 1; j < BLOCKS_PER_GROUP; ++j)
+              std::memcpy(out[j].h2, out[0].h2, sizeof(HashBlock::h2));
+          }
+        }
+      }
+    });
+  }
+
+  // Wait for all the async tasks to finish
+  hash_futures.back().get();
+
+  return success;
+}
+
+bool VolumeWii::EncryptGroup(
+    u64 offset, u64 partition_data_offset, u64 partition_data_decrypted_size,
+    const std::array<u8, AES_KEY_SIZE>& key, BlobReader* blob,
+    std::array<u8, GROUP_TOTAL_SIZE>* out,
+    const std::function<void(HashBlock hash_blocks[BLOCKS_PER_GROUP])>& hash_exception_callback)
+{
+  std::vector<std::array<u8, BLOCK_DATA_SIZE>> unencrypted_data(BLOCKS_PER_GROUP);
+  std::vector<HashBlock> unencrypted_hashes(BLOCKS_PER_GROUP);
+
+  const bool success =
+      HashGroup(unencrypted_data.data(), unencrypted_hashes.data(), [&](size_t block) {
+        if (offset + (block + 1) * BLOCK_DATA_SIZE <= partition_data_decrypted_size)
+        {
+          if (!blob->ReadWiiDecrypted(offset + block * BLOCK_DATA_SIZE, BLOCK_DATA_SIZE,
+                                      unencrypted_data[block].data(), partition_data_offset))
+          {
+            return false;
+          }
+        }
+        else
+        {
+          unencrypted_data[block].fill(0);
+        }
+        return true;
+      });
+
+  if (!success)
+    return false;
+
+  if (hash_exception_callback)
+    hash_exception_callback(unencrypted_hashes.data());
+
+  const unsigned int threads =
+      std::min(BLOCKS_PER_GROUP, std::max<unsigned int>(1, std::thread::hardware_concurrency()));
+
+  std::vector<std::future<void>> encryption_futures(threads);
+
+  mbedtls_aes_context aes_context;
+  mbedtls_aes_setkey_enc(&aes_context, key.data(), 128);
+
+  for (size_t i = 0; i < threads; ++i)
+  {
+    encryption_futures[i] = std::async(
+        std::launch::async,
+        [&unencrypted_data, &unencrypted_hashes, &aes_context, &out](size_t start, size_t end) {
+          for (size_t i = start; i < end; ++i)
+          {
+            u8* out_ptr = out->data() + i * BLOCK_TOTAL_SIZE;
+
+            u8 iv[16] = {};
+            mbedtls_aes_crypt_cbc(&aes_context, MBEDTLS_AES_ENCRYPT, BLOCK_HEADER_SIZE, iv,
+                                  reinterpret_cast<u8*>(&unencrypted_hashes[i]), out_ptr);
+
+            std::memcpy(iv, out_ptr + 0x3D0, sizeof(iv));
+            mbedtls_aes_crypt_cbc(&aes_context, MBEDTLS_AES_ENCRYPT, BLOCK_DATA_SIZE, iv,
+                                  unencrypted_data[i].data(), out_ptr + BLOCK_HEADER_SIZE);
+          }
+        },
+        i * BLOCKS_PER_GROUP / threads, (i + 1) * BLOCKS_PER_GROUP / threads);
+  }
+
+  for (std::future<void>& future : encryption_futures)
+    future.get();
+
+  return true;
+}
+
+void VolumeWii::DecryptBlockHashes(const u8* in, HashBlock* out, mbedtls_aes_context* aes_context)
+{
+  std::array<u8, 16> iv;
+  iv.fill(0);
+  mbedtls_aes_crypt_cbc(aes_context, MBEDTLS_AES_DECRYPT, sizeof(HashBlock), iv.data(), in,
+                        reinterpret_cast<u8*>(out));
+}
+
+void VolumeWii::DecryptBlockData(const u8* in, u8* out, mbedtls_aes_context* aes_context)
+{
+  std::array<u8, 16> iv;
+  std::copy(&in[0x3d0], &in[0x3e0], iv.data());
+  mbedtls_aes_crypt_cbc(aes_context, MBEDTLS_AES_DECRYPT, BLOCK_DATA_SIZE, iv.data(),
+                        &in[BLOCK_HEADER_SIZE], out);
 }
 
 }  // namespace

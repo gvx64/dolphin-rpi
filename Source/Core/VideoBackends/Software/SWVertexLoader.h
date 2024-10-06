@@ -26,8 +26,10 @@ public:
 protected:
   void ResetBuffer(u32 stride) override;
   u16* GetIndexBuffer() { return &LocalIBuffer[0]; }
+
 private:
-  void vFlush() override;
+//gvx64  void vFlush() override;
+  void vFlush(bool useDstAlpha) override; //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
   std::vector<u8> LocalVBuffer;
   std::vector<u16> LocalIBuffer;
 

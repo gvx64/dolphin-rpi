@@ -26,6 +26,11 @@ public:
   BlobType GetBlobType() const override { return BlobType::DRIVE; }
   u64 GetDataSize() const override { return m_size; }
   u64 GetRawSize() const override { return m_size; }
+  bool IsDataSizeAccurate() const override { return true; } //gvx64 rollforward to 5.0-12188 - implement .rvz support
+
+  u64 GetBlockSize() const override { return ECC_BLOCK_SIZE; } //gvx64 rollforward to 5.0-12188 - implement .rvz support
+  bool HasFastRandomAccessInBlock() const override { return false; } //gvx64 rollforward to 5.0-12188 - implement .rvz support
+
 private:
   DriveReader(const std::string& drive);
   bool GetBlock(u64 block_num, u8* out_ptr) override;
@@ -39,6 +44,7 @@ private:
   File::IOFile m_file;
   bool IsOK() const { return m_file.IsOpen() && m_file.IsGood(); }
 #endif
+  static constexpr u64 ECC_BLOCK_SIZE = 0x8000; //gvx64 rollforward to 5.0-12188 - implement .rvz support
   u64 m_size = 0;
 };
 

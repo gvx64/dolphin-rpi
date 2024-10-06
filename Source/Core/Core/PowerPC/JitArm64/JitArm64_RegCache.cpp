@@ -123,13 +123,15 @@ const OpArg& Arm64GPRCache::GetGuestGPROpArg(size_t preg) const
 Arm64GPRCache::GuestRegInfo Arm64GPRCache::GetGuestGPR(size_t preg)
 {
   _assert_(preg < GUEST_GPR_COUNT);
-  return {32, PPCSTATE_OFF(gpr[preg]), m_guest_registers[GUEST_GPR_OFFSET + preg]};
+//gvx64  return {32, PPCSTATE_OFF(gpr[preg]), m_guest_registers[GUEST_GPR_OFFSET + preg]};
+  return {32, PPCSTATE_OFF_GPR(preg), m_guest_registers[GUEST_GPR_OFFSET + preg]}; //gvx64
 }
 
 Arm64GPRCache::GuestRegInfo Arm64GPRCache::GetGuestCR(size_t preg)
 {
   _assert_(preg < GUEST_CR_COUNT);
-  return {64, PPCSTATE_OFF(cr_val[preg]), m_guest_registers[GUEST_CR_OFFSET + preg]};
+//gvx64  return {64, PPCSTATE_OFF(cr_val[preg]), m_guest_registers[GUEST_CR_OFFSET + preg]};
+  return {64, PPCSTATE_OFF_CR(preg), m_guest_registers[GUEST_CR_OFFSET + preg]}; //gvx64
 }
 
 Arm64GPRCache::GuestRegInfo Arm64GPRCache::GetGuestByIndex(size_t index)
@@ -416,7 +418,8 @@ ARM64Reg Arm64FPRCache::R(size_t preg, RegType type)
       // Load the high 64bits from the file and insert them in to the high 64bits of the host
       // register
       ARM64Reg tmp_reg = GetReg();
-      m_float_emit->LDR(64, INDEX_UNSIGNED, tmp_reg, PPC_REG, PPCSTATE_OFF(ps[preg][1]));
+//gvx64      m_float_emit->LDR(64, INDEX_UNSIGNED, tmp_reg, PPC_REG, PPCSTATE_OFF(ps[preg][1]));
+      m_float_emit->LDR(64, INDEX_UNSIGNED, tmp_reg, PPC_REG, PPCSTATE_OFF_PS1(preg)); //gvx64
       m_float_emit->INS(64, host_reg, 1, tmp_reg, 0);
       UnlockRegister(tmp_reg);
 
@@ -470,7 +473,8 @@ ARM64Reg Arm64FPRCache::R(size_t preg, RegType type)
       reg.Load(host_reg, REG_LOWER_PAIR);
     }
     reg.SetDirty(false);
-    m_float_emit->LDR(load_size, INDEX_UNSIGNED, host_reg, PPC_REG, PPCSTATE_OFF(ps[preg][0]));
+//gvx64    m_float_emit->LDR(load_size, INDEX_UNSIGNED, host_reg, PPC_REG, PPCSTATE_OFF(ps[preg][0]));
+    m_float_emit->LDR(load_size, INDEX_UNSIGNED, host_reg, PPC_REG, PPCSTATE_OFF_PS0(preg)); //gvx64
     return host_reg;
   }
   default:
@@ -518,7 +522,8 @@ ARM64Reg Arm64FPRCache::RW(size_t preg, RegType type)
       // We are doing a full 128bit store because it takes 2 cycles on a Cortex-A57 to do a 128bit
       // store.
       // It would take longer to do an insert to a temporary and a 64bit store than to just do this.
-      m_float_emit->STR(128, INDEX_UNSIGNED, flush_reg, PPC_REG, PPCSTATE_OFF(ps[preg][0]));
+//gvx64      m_float_emit->STR(128, INDEX_UNSIGNED, flush_reg, PPC_REG, PPCSTATE_OFF(ps[preg][0]));
+      m_float_emit->STR(128, INDEX_UNSIGNED, flush_reg, PPC_REG, PPCSTATE_OFF_PS0(preg)); //gvx64
       break;
     case REG_DUP_SINGLE:
       flush_reg = GetReg();
@@ -526,7 +531,8 @@ ARM64Reg Arm64FPRCache::RW(size_t preg, RegType type)
     // fall through
     case REG_DUP:
       // Store PSR1 (which is equal to PSR0) in memory.
-      m_float_emit->STR(64, INDEX_UNSIGNED, flush_reg, PPC_REG, PPCSTATE_OFF(ps[preg][1]));
+//gvx64      m_float_emit->STR(64, INDEX_UNSIGNED, flush_reg, PPC_REG, PPCSTATE_OFF(ps[preg][1]));
+      m_float_emit->STR(64, INDEX_UNSIGNED, flush_reg, PPC_REG, PPCSTATE_OFF_PS1(preg)); //gvx64
       break;
     default:
       // All other types doesn't store anything in PSR1.
@@ -614,7 +620,8 @@ void Arm64FPRCache::FlushRegister(size_t preg, bool maintain_state)
       store_size = 64;
 
     if (dirty)
-      m_float_emit->STR(store_size, INDEX_UNSIGNED, host_reg, PPC_REG, PPCSTATE_OFF(ps[preg][0]));
+//gvx64      m_float_emit->STR(store_size, INDEX_UNSIGNED, host_reg, PPC_REG, PPCSTATE_OFF(ps[preg][0]));
+      m_float_emit->STR(store_size, INDEX_UNSIGNED, host_reg, PPC_REG, PPCSTATE_OFF_PS0(preg)); //gvx64
 
     if (!maintain_state)
     {
@@ -630,8 +637,10 @@ void Arm64FPRCache::FlushRegister(size_t preg, bool maintain_state)
       // Too bad moving them would break savestate compatibility between x86_64 and AArch64
       // m_float_emit->STP(64, INDEX_SIGNED, host_reg, host_reg, PPC_REG,
       // PPCSTATE_OFF(ps[preg][0]));
-      m_float_emit->STR(64, INDEX_UNSIGNED, host_reg, PPC_REG, PPCSTATE_OFF(ps[preg][0]));
-      m_float_emit->STR(64, INDEX_UNSIGNED, host_reg, PPC_REG, PPCSTATE_OFF(ps[preg][1]));
+//gvx64      m_float_emit->STR(64, INDEX_UNSIGNED, host_reg, PPC_REG, PPCSTATE_OFF(ps[preg][0]));
+      m_float_emit->STR(64, INDEX_UNSIGNED, host_reg, PPC_REG, PPCSTATE_OFF_PS0(preg)); //gvx64
+//gvx64      m_float_emit->STR(64, INDEX_UNSIGNED, host_reg, PPC_REG, PPCSTATE_OFF(ps[preg][1]));
+      m_float_emit->STR(64, INDEX_UNSIGNED, host_reg, PPC_REG, PPCSTATE_OFF_PS1(preg)); //gvx64
     }
 
     if (!maintain_state)

@@ -51,7 +51,8 @@ public:
 
   void ReinterpretPixelData(unsigned int convtype) override;
 
-  void ApplyState() override;
+//gvx64  void ApplyState() override;
+  void ApplyState(bool bUseDstAlpha) override; //gvx64 - rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
 
   void ResetAPIState() override;
   void RestoreAPIState() override;

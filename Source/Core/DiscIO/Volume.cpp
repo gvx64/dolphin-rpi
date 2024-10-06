@@ -86,6 +86,28 @@ std::map<Language, std::string> Volume::ReadWiiNames(const std::vector<u8>& data
   return names;
 }
 
+static std::unique_ptr<VolumeDisc> CreateDisc(std::unique_ptr<BlobReader>& reader) //gvx64 rollforward to 5.0-12188 - implement .rvz support
+{
+  // Check for Wii
+  const std::optional<u32> wii_magic = reader->ReadSwapped<u32>(0x18);
+  if (wii_magic == u32(0x5D1C9EA3))
+    return std::make_unique<VolumeWii>(std::move(reader));
+
+  // Check for GC
+  const std::optional<u32> gc_magic = reader->ReadSwapped<u32>(0x1C);
+  if (gc_magic == u32(0xC2339F3D))
+    return std::make_unique<VolumeGC>(std::move(reader));
+
+  // No known magic words found
+  return nullptr;
+}
+
+std::unique_ptr<VolumeDisc> CreateDisc(const std::string& path) //gvx64 rollforward to 5.0-12188 - implement .rvz support
+{
+  std::unique_ptr<BlobReader> reader(CreateBlobReader(path));//gvx64 rollforward to 5.0-12188 - implement .rvz support
+  return reader ? CreateDisc(reader) : nullptr; //gvx64 rollforward to 5.0-12188 - implement .rvz support
+}
+
 std::unique_ptr<Volume> CreateVolumeFromFilename(const std::string& filename)
 {
   std::unique_ptr<BlobReader> reader(CreateBlobReader(filename));

@@ -7,6 +7,7 @@
 #include <cinttypes>
 #include <cstring>
 #include <vector>
+#include <limits> //gvx64
 
 #include "Common/Align.h"
 #include "Common/Arm64Emitter.h"

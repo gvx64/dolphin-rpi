@@ -10,6 +10,14 @@
 
 enum class APIType;
 
+// Different ways to achieve rendering with destination alpha
+enum DSTALPHA_MODE //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
+{
+  DSTALPHA_NONE,              // Render normally, without destination alpha
+  DSTALPHA_ALPHA_PASS,        // Render normally first, then render again for alpha
+  DSTALPHA_DUAL_SOURCE_BLEND  // Use dual-source blending
+};
+
 #pragma pack(1)
 struct pixel_shader_uid_data
 {
@@ -18,8 +26,9 @@ struct pixel_shader_uid_data
   u32 num_values;  // TODO: Shouldn't be a u32
   u32 NumValues() const { return num_values; }
   u32 components : 2;
-  u32 pad0 : 1;
-  u32 useDstAlpha : 1;
+//gvx64  u32 pad0 : 1;
+//gvx64  u32 useDstAlpha : 1;
+  u32 dstAlphaMode : 2;  //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
   u32 Pretest : 2;
   u32 nIndirectStagesUsed : 4;
   u32 stereo : 1;
@@ -163,4 +172,5 @@ struct pixel_shader_uid_data
 typedef ShaderUid<pixel_shader_uid_data> PixelShaderUid;
 
 ShaderCode GeneratePixelShaderCode(APIType ApiType, const pixel_shader_uid_data* uid_data);
-PixelShaderUid GetPixelShaderUid();
+//gvx64 PixelShaderUid GetPixelShaderUid();
+PixelShaderUid GetPixelShaderUid(DSTALPHA_MODE dstAlphaMode);  //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass

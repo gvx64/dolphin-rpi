@@ -182,10 +182,12 @@ void ProgramShaderCache::UploadConstants()
   }
 }
 
-SHADER* ProgramShaderCache::SetShader(u32 primitive_type)
+//gvx64SHADER* ProgramShaderCache::SetShader(u32 primitive_type)
+SHADER* ProgramShaderCache::SetShader(DSTALPHA_MODE dstAlphaMode, u32 primitive_type) //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
 {
   SHADERUID uid;
-  GetShaderId(&uid, primitive_type);
+//gvx64  GetShaderId(&uid, primitive_type);
+ GetShaderId(&uid, dstAlphaMode, primitive_type);  //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
 
   // Check if the shader is already set
   if (last_entry)
@@ -473,9 +475,11 @@ GLuint ProgramShaderCache::CompileSingleShader(GLuint type, const std::string& c
   return result;
 }
 
-void ProgramShaderCache::GetShaderId(SHADERUID* uid, u32 primitive_type)
+//gvx64 void ProgramShaderCache::GetShaderId(SHADERUID* uid, u32 primitive_type)
+void ProgramShaderCache::GetShaderId(SHADERUID* uid, DSTALPHA_MODE dstAlphaMode, u32 primitive_type)  //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
 {
-  uid->puid = GetPixelShaderUid();
+//gvx64  uid->puid = GetPixelShaderUid();
+  uid->puid = GetPixelShaderUid(dstAlphaMode);  //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
   uid->vuid = GetVertexShaderUid();
   uid->guid = GetGeometryShaderUid(primitive_type);
 }

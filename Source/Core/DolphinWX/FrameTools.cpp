@@ -336,8 +336,8 @@ void CFrame::DoOpen(bool Boot)
 
   wxString path = wxFileSelector(
       _("Select the file to load"), wxEmptyString, wxEmptyString, wxEmptyString,
-      _("All GC/Wii files (elf, dol, gcm, iso, tgc, wbfs, ciso, gcz, wad, dff)") +
-          wxString::Format("|*.elf;*.dol;*.gcm;*.iso;*.tgc;*.wbfs;*.ciso;*.gcz;*.wad;*.dff|%s",
+      _("All GC/Wii files (elf, dol, gcm, iso, rvz, tgc, wbfs, ciso, gcz, wad, dff)") +
+          wxString::Format("|*.elf;*.dol;*.gcm;*.iso;*.rvz;*.tgc;*.wbfs;*.ciso;*.gcz;*.wad;*.dff|%s",
                            wxGetTranslation(wxALL_FILES)),
       wxFD_OPEN | wxFD_FILE_MUST_EXIST, this);
 

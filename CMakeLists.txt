@@ -13,14 +13,14 @@ project(dolphin-emu)
 option(USE_EGL "Enables EGL OpenGL Interface" OFF)
 option(TRY_X11 "Enables X11 Support" ON)
 option(USE_SHARED_ENET "Use shared libenet if found rather than Dolphin's soon-to-compatibly-diverge version" OFF)
-option(USE_UPNP "Enables UPnP port mapping support" ON)
+option(USE_UPNP "Enables UPnP port mapping support" OFF)
 option(DISABLE_WX "Disable wxWidgets (use Qt or CLI interface)" OFF)
 option(ENABLE_QT2 "Enable Qt2 (use the other experimental Qt interface)" OFF)
 option(ENABLE_LTO "Enables Link Time Optimization" OFF)
 option(ENABLE_GENERIC "Enables generic build that should run on any little-endian host" OFF)
 option(ENABLE_HEADLESS "Enables running Dolphin as a headless variant" OFF)
 option(ENABLE_ALSA "Enables ALSA sound backend" ON)
-option(ENABLE_PULSEAUDIO "Enables PulseAudio sound backend" ON)
+option(ENABLE_PULSEAUDIO "Enables PulseAudio sound backend" OFF)
 option(ENABLE_LLVM "Enables LLVM support, for disassembly" ON)
 
 # Maintainers: if you consider blanket disabling this for your users, please
@@ -29,7 +29,7 @@ option(ENABLE_LLVM "Enables LLVM support, for disassembly" ON)
 #    launch).
 #  * The Dolphin team relies on the data in order to understand the behavior
 #    of our software in the wild.
-option(ENABLE_ANALYTICS "Enables opt-in Analytics collection" ON)
+option(ENABLE_ANALYTICS "Enables opt-in Analytics collection" OFF)
 
 # Name of the Dolphin distributor. If you redistribute Dolphin builds (forks,
 # unofficial builds) please consider identifying your distribution with a
@@ -51,7 +51,7 @@ if(APPLE)
   option(OSX_USE_DEFAULT_SEARCH_PATH "Don't prioritize system library paths" OFF)
 endif()
 
-option(ENCODE_FRAMEDUMPS "Encode framedumps in AVI format" ON)
+option(ENCODE_FRAMEDUMPS "Encode framedumps in AVI format" OFF)
 
 option(FASTLOG "Enable all logs" OFF)
 option(OPROFILING "Enable profiling" OFF)
@@ -590,6 +590,31 @@ if(NOT XXHASH_FOUND)
 endif()
 LIST(APPEND LIBS xxhash)
 
+find_package(BZip2) #gvx64 rollforward to 5.0-12188 - implement .rvz support
+if(BZIP2_FOUND)
+  message(STATUS "Using shared bzip2")
+else()
+#  check_vendoring_approved(bzip2)
+  message(STATUS "Shared bzip2 not found, falling back to the static library")
+  add_subdirectory(Externals/bzip2)
+endif()
+
+# macOS ships with liblzma.dylib but no headers, so check for the headers too
+find_package(LibLZMA) #gvx64 rollforward to 5.0-12188 - implement .rvz support
+#check_include_file(lzma.h HAVE_LZMA_H)
+#if(LIBLZMA_FOUND AND LZMA_H)
+if(LIBLZMA_FOUND)
+  message(STATUS "Using shared lzma")
+else()
+#  check_vendoring_approved(lzma)
+  if(LIBLZMA_FOUND AND NOT LZMA_H)
+    message(STATUS "Shared lzma found but lacks headers, falling back to the static library")
+  else()
+    message(STATUS "Shared lzma not found, falling back to the static library")
+  endif()
+  add_subdirectory(Externals/liblzma)
+endif()
+
 find_package(ZLIB)
 if(ZLIB_FOUND)
   message(STATUS "Using shared zlib")
@@ -598,6 +623,17 @@ else()
   message(STATUS "Shared zlib not found, falling back to the static library")
   add_subdirectory(Externals/zlib)
   include_directories(Externals/zlib)
+endif()
+
+pkg_check_modules(MINIZIP minizip>=2.0.0)
+if(MINIZIP_FOUND)
+  message(STATUS "Using shared minizip")
+	include_directories(${MINIZIP_INCLUDE_DIRS})
+else()
+  #check_vendoring_approved(minizip)
+  message(STATUS "Shared minizip not found, falling back to the static library")
+  add_subdirectory(Externals/minizip)
+  include_directories(External/minizip)
 endif()
 
 if(NOT APPLE)

@@ -1247,7 +1247,8 @@ void Renderer::ResizeSwapChain()
   OnSwapChainResized();
 }
 
-void Renderer::ApplyState()
+//gvx64 void Renderer::ApplyState()
+void Renderer::ApplyState(bool bUseDstAlpha) //gvx64 - rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
 {
 }
 

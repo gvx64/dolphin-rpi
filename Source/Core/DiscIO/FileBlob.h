@@ -22,6 +22,11 @@ public:
   BlobType GetBlobType() const override { return BlobType::PLAIN; }
   u64 GetDataSize() const override { return m_size; }
   u64 GetRawSize() const override { return m_size; }
+  bool IsDataSizeAccurate() const override { return true; } //gvx64 rollforward to 5.0-12188 - implement .rvz support
+
+  u64 GetBlockSize() const override { return 0; } //gvx64 rollforward to 5.0-12188 - implement .rvz support
+  bool HasFastRandomAccessInBlock() const override { return true; } //gvx64 rollforward to 5.0-12188 - implement .rvz support
+
   bool Read(u64 offset, u64 nbytes, u8* out_ptr) override;
 
 private:

@@ -49,7 +49,8 @@ protected:
 
 private:
   void Draw(u32 stride);
-  void vFlush() override;
+//gvx64  void vFlush() override;
+  void vFlush(bool useDstAlpha) override; //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
   void PrepareDrawBuffers(u32 stride);
 
   // Alternative buffers in CPU memory for primatives we are going to discard.

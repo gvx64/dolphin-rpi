@@ -40,6 +40,10 @@ public:
   // The CISO format does not save the original file size.
   // This function returns an upper bound.
   u64 GetDataSize() const override;
+  bool IsDataSizeAccurate() const override { return false; } //gvx64 rollforward to 5.0-12188 - implement .rvz support
+
+  u64 GetBlockSize() const override { return m_block_size; } //gvx64 rollforward to 5.0-12188 - implement .rvz support
+  bool HasFastRandomAccessInBlock() const override { return true; } //gvx64 rollforward to 5.0-12188 - implement .rvz support
 
   u64 GetRawSize() const override;
   bool Read(u64 offset, u64 nbytes, u8* out_ptr) override;

@@ -199,6 +199,12 @@ DiscIO::Platform GetDiscType()
   return s_disc->GetVolumeType();
 }
 
+u64 PartitionOffsetToRawOffset(u64 offset, const DiscIO::Partition& partition) //gvx64 rollforward to 5.0-12188 - implement .rvz support
+{
+  // PartitionOffsetToRawOffset is thread-safe, so calling WaitUntilIdle isn't necessary.
+  return s_disc->PartitionOffsetToRawOffset(offset, partition); //gvx64 rollforward to 5.0-12188 - implement .rvz support
+}
+
 IOS::ES::TMDReader GetTMD(const DiscIO::Partition& partition)
 {
   WaitUntilIdle();

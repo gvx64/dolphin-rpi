@@ -301,10 +301,12 @@ void StateTracker::SetBlendState(const BlendingState& state)
   m_dirty_flags |= DIRTY_FLAG_PIPELINE;
 }
 
-bool StateTracker::CheckForShaderChanges(u32 gx_primitive_type)
+//gvx64 bool StateTracker::CheckForShaderChanges(u32 gx_primitive_type)
+bool StateTracker::CheckForShaderChanges(u32 gx_primitive_type, DSTALPHA_MODE dstalpha_mode) //gvx64 rollback to 5.0-1651 - reintroduce Vulkan alpha pass
 {
   VertexShaderUid vs_uid = GetVertexShaderUid();
-  PixelShaderUid ps_uid = GetPixelShaderUid();
+//gvx64  PixelShaderUid ps_uid = GetPixelShaderUid();
+ PixelShaderUid ps_uid = GetPixelShaderUid(dstalpha_mode); //gvx64 rollback to 5.0-1651 - reintroduce Vulkan alpha pass
 
   bool changed = false;
 
@@ -336,6 +338,16 @@ bool StateTracker::CheckForShaderChanges(u32 gx_primitive_type)
     m_ps_uid = ps_uid;
     changed = true;
   }
+
+  if (m_dstalpha_mode != dstalpha_mode) //gvx64 rollback to 5.0-1651 (reintroduce Vulkan alpha pass)
+  {
+    // Switching to/from alpha pass requires a pipeline change, since the blend state
+    // is overridden in the destination alpha pass.
+    if (m_dstalpha_mode == DSTALPHA_ALPHA_PASS || dstalpha_mode == DSTALPHA_ALPHA_PASS)
+      changed = true;
+
+    m_dstalpha_mode = dstalpha_mode;
+  }  //gvx64 rollback to 5.0-1651 - reintroduce Vulkan alpha pass
 
   if (changed)
     m_dirty_flags |= DIRTY_FLAG_PIPELINE;
@@ -868,6 +880,26 @@ void StateTracker::EndClearRenderPass()
   EndRenderPass();
 }
 
+PipelineInfo StateTracker::GetAlphaPassPipelineConfig(const PipelineInfo& info) const  //gvx64 rollback to 5.0-1651 - reintroduce Vulkan alpha pass
+{
+  PipelineInfo temp_info = info;
+
+  // Skip depth writes for this pass. The results will be the same, so no
+  // point in overwriting depth values with the same value.
+  temp_info.depth_stencil_state.write_enable = VK_FALSE;
+
+  // Only allow alpha writes, and disable blending.
+//  temp_info.blend_state.blend_enable = VK_FALSE;
+//  temp_info.blend_state.logic_op_enable = VK_FALSE;
+//  temp_info.blend_state.write_mask = VK_COLOR_COMPONENT_A_BIT;
+  temp_info.blend_state.blendenable = true; //gvx update state attributes as per changes in 5.0-3404
+  temp_info.blend_state.logicopenable = false;  //gvx update state attributes as per changes in 5.0-3404
+  temp_info.blend_state.colorupdate = false;  //gvx update state attributes as per changes in 5.0-3404
+  temp_info.blend_state.alphaupdate = true;  //gvx update state attributes as per changes in 5.0-3404, alpha_enable <==> write_mask = VK_COLOR_COMPONENT_A_BIT with colorupdate set to false
+
+  return temp_info;
+}  //gvx64 rollback to 5.0-1651 - reintroduce Vulkan alpha pass
+
 VkPipeline StateTracker::GetPipelineAndCacheUID(const PipelineInfo& info)
 {
   auto result = g_object_cache->GetPipelineWithCacheResult(info);
@@ -886,7 +918,18 @@ bool StateTracker::UpdatePipeline()
     return false;
 
   // Grab a new pipeline object, this can fail.
-  m_pipeline_object = GetPipelineAndCacheUID(m_pipeline_state);
+//gvx64  m_pipeline_object = GetPipelineAndCacheUID(m_pipeline_state);
+  // We have to use a different blend state for the alpha pass of the dstalpha fallback.
+  if (m_dstalpha_mode == DSTALPHA_ALPHA_PASS)  //gvx64 rollback to 5.0-1651 - reintroduce Vulkan alpha pass
+  {
+    // We need to retain the existing state, since we don't want to break the next draw.
+    PipelineInfo temp_info = GetAlphaPassPipelineConfig(m_pipeline_state);
+    m_pipeline_object = GetPipelineAndCacheUID(temp_info);
+  }
+  else
+  {
+    m_pipeline_object = GetPipelineAndCacheUID(m_pipeline_state);
+  }  //gvx64 rollback to 5.0-1651 - reintroduce Vulkan alpha pass
 
   m_dirty_flags |= DIRTY_FLAG_PIPELINE_BINDING;
   return m_pipeline_object != VK_NULL_HANDLE;

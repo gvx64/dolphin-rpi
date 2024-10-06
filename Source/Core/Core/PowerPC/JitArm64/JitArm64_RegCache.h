@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <memory>
 #include <vector>
+#include <type_traits> //gvx64
 
 #include "Common/Arm64Emitter.h"
 #include "Common/CommonTypes.h"
@@ -23,10 +24,23 @@ static const ARM64Reg DISPATCHER_PC = W26;  // register for PC when calling the 
 
 #define PPCSTATE_OFF(elem) (offsetof(PowerPC::PowerPCState, elem))
 
+#define PPCSTATE_OFF_ARRAY(elem, i) (offsetof(PowerPC::PowerPCState, elem[0]) + sizeof(PowerPC::PowerPCState::elem[0]) * (i)) //gvx64
+
+#define PPCSTATE_OFF_GPR(i) PPCSTATE_OFF_ARRAY(gpr, i) //gvx64
+#define PPCSTATE_OFF_CR(i) PPCSTATE_OFF_ARRAY(cr_val, i) //gvx64
+#define PPCSTATE_OFF_SR(i) PPCSTATE_OFF_ARRAY(sr, i)  //gvx64
+#define PPCSTATE_OFF_SPR(i) PPCSTATE_OFF_ARRAY(spr, i)  //gvx64
+
+//static_assert(std::is_same_v<decltype(PowerPC::PowerPCState::ps[0]), PowerPC::PairedSingle&>); //gvx64
+#define PPCSTATE_OFF_PS0(i) (PPCSTATE_OFF_ARRAY(ps, i) )  //gvx64
+#define PPCSTATE_OFF_PS1(i) (PPCSTATE_OFF_ARRAY(ps, i) + sizeof(PowerPC::PowerPCState::ps[0][0]) )  //gvx64
+
 // Some asserts to make sure we will be able to load everything
 static_assert(PPCSTATE_OFF(spr[1023]) <= 16380, "LDR(32bit) can't reach the last SPR");
 static_assert((PPCSTATE_OFF(ps[0][0]) % 8) == 0,
               "LDR(64bit VFP) requires FPRs to be 8 byte aligned");
+static_assert(PPCSTATE_OFF_SPR(1023) <= 16380, "LDR(32bit) can't reach the last SPR"); //gvx64
+static_assert((PPCSTATE_OFF_PS0(0) % 8) == 0, "LDR(64bit VFP) requires FPRs to be 8 byte aligned"); //gvx64
 static_assert(PPCSTATE_OFF(xer_ca) < 4096, "STRB can't store xer_ca!");
 static_assert(PPCSTATE_OFF(xer_so_ov) < 4096, "STRB can't store xer_so_ov!");
 

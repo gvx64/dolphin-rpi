@@ -129,7 +129,8 @@ void VertexManager::ResetBuffer(u32 stride)
       static_cast<u32>(m_index_stream_buffer->GetCurrentOffset() / sizeof(u16));
 }
 
-void VertexManager::vFlush()
+//gvx64 void VertexManager::vFlush()
+void VertexManager::vFlush(bool use_dst_alpha) //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
 {
   const VertexFormat* vertex_format =
       static_cast<VertexFormat*>(VertexLoaderManager::GetCurrentVertexFormat());
@@ -161,8 +162,14 @@ void VertexManager::vFlush()
     break;
   }
 
+ // Can we do single-pass dst alpha?
+  DSTALPHA_MODE dstalpha_mode = DSTALPHA_NONE;  //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
+  if (use_dst_alpha && g_vulkan_context->SupportsDualSourceBlend())  //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
+    dstalpha_mode = DSTALPHA_DUAL_SOURCE_BLEND; //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
+
   // Check for any shader stage changes
-  StateTracker::GetInstance()->CheckForShaderChanges(m_current_primitive_type);
+//gvx64  StateTracker::GetInstance()->CheckForShaderChanges(m_current_primitive_type);
+  StateTracker::GetInstance()->CheckForShaderChanges(m_current_primitive_type, dstalpha_mode);  //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
 
   // Update any changed constants
   StateTracker::GetInstance()->UpdateVertexShaderConstants();
@@ -204,6 +211,27 @@ void VertexManager::vFlush()
   // Execute the draw
   vkCmdDrawIndexed(g_command_buffer_mgr->GetCurrentCommandBuffer(), index_count, 1,
                    m_current_draw_base_index, m_current_draw_base_vertex, 0);
+
+  // If the GPU does not support dual-source blending, we can approximate the effect by drawing
+  // the object a second time, with the write mask set to alpha only using a shader that outputs
+  // the destination/constant alpha value (which would normally be SRC_COLOR.a).
+  //
+  // This is also used when logic ops and destination alpha is enabled, since we can't enable
+  // blending and logic ops concurrently (and the logical operation applies to all channels).
+  bool logic_op_enabled = bpmem.blendmode.logicopenable && !bpmem.blendmode.blendenable;  //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
+  if (use_dst_alpha && (!g_vulkan_context->SupportsDualSourceBlend() || logic_op_enabled))  //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
+  {
+    StateTracker::GetInstance()->CheckForShaderChanges(m_current_primitive_type,
+                                                       DSTALPHA_ALPHA_PASS);  //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
+    if (!StateTracker::GetInstance()->Bind())  //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
+    {
+      WARN_LOG(VIDEO, "Skipped draw of %u indices (alpha pass)", index_count);  //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
+      return;  //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
+    }
+
+    vkCmdDrawIndexed(g_command_buffer_mgr->GetCurrentCommandBuffer(), index_count, 1,
+                     m_current_draw_base_index, m_current_draw_base_vertex, 0);  //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
+  }  //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
 
   StateTracker::GetInstance()->OnDraw();
 }

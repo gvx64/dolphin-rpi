@@ -40,11 +40,18 @@ void VertexManager::ResetBuffer(u32 stride)
   IndexGenerator::Start(&m_local_i_buffer[0]);
 }
 
-void VertexManager::vFlush()
+//gvx64 void VertexManager::vFlush()
+void VertexManager::vFlush(bool use_dst_alpha) //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
 {
-  VertexShaderCache::s_instance->SetShader(m_current_primitive_type);
-  GeometryShaderCache::s_instance->SetShader(m_current_primitive_type);
-  PixelShaderCache::s_instance->SetShader(m_current_primitive_type);
+  VertexShaderCache::s_instance->SetShader(
+      use_dst_alpha ? DSTALPHA_DUAL_SOURCE_BLEND : DSTALPHA_NONE, m_current_primitive_type); //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
+  GeometryShaderCache::s_instance->SetShader(
+      use_dst_alpha ? DSTALPHA_DUAL_SOURCE_BLEND : DSTALPHA_NONE, m_current_primitive_type);//gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
+  PixelShaderCache::s_instance->SetShader(
+      use_dst_alpha ? DSTALPHA_DUAL_SOURCE_BLEND : DSTALPHA_NONE, m_current_primitive_type);//gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
+//gvx64  VertexShaderCache::s_instance->SetShader(m_current_primitive_type);
+//gvx64  GeometryShaderCache::s_instance->SetShader(m_current_primitive_type);
+//gvx64  PixelShaderCache::s_instance->SetShader(m_current_primitive_type);
 }
 
 }  // namespace

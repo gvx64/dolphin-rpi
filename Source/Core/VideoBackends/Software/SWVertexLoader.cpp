@@ -54,7 +54,8 @@ void SWVertexLoader::ResetBuffer(u32 stride)
   IndexGenerator::Start(GetIndexBuffer());
 }
 
-void SWVertexLoader::vFlush()
+//gvx64 void SWVertexLoader::vFlush()
+void SWVertexLoader::vFlush(bool useDstAlpha) //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
 {
   DebugUtil::OnObjectBegin();
 

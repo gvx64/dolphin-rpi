@@ -158,14 +158,17 @@ static const char* tevAOutputTable[] = {"prev.a", "c0.a", "c1.a", "c2.a"};
 // leak
 //        into this UID; This is really unhelpful if these UIDs ever move from one machine to
 //        another.
-PixelShaderUid GetPixelShaderUid()
+//gvx64 PixelShaderUid GetPixelShaderUid()
+
+PixelShaderUid GetPixelShaderUid(DSTALPHA_MODE dstAlphaMode) //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
 {
   PixelShaderUid out;
   pixel_shader_uid_data* uid_data = out.GetUidData<pixel_shader_uid_data>();
   memset(uid_data, 0, sizeof(*uid_data));
 
-  uid_data->useDstAlpha = bpmem.dstalpha.enable && bpmem.blendmode.alphaupdate &&
-                          bpmem.zcontrol.pixel_format == PEControl::RGBA6_Z24;
+//gvx64  uid_data->useDstAlpha = bpmem.dstalpha.enable && bpmem.blendmode.alphaupdate &&
+//gvx64                          bpmem.zcontrol.pixel_format == PEControl::RGBA6_Z24;
+  uid_data->dstAlphaMode = dstAlphaMode; //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
 
   uid_data->genMode_numindstages = bpmem.genMode.numindstages;
   uid_data->genMode_numtevstages = bpmem.genMode.numtevstages;
@@ -331,9 +334,15 @@ PixelShaderUid GetPixelShaderUid()
   uid_data->ztex_op = bpmem.ztex2.op;
   uid_data->early_ztest = bpmem.UseEarlyDepthTest();
   uid_data->fog_fsel = bpmem.fog.c_proj_fsel.fsel;
-  uid_data->fog_fsel = bpmem.fog.c_proj_fsel.fsel;
-  uid_data->fog_proj = bpmem.fog.c_proj_fsel.proj;
-  uid_data->fog_RangeBaseEnabled = bpmem.fogRange.Base.Enabled;
+  if (dstAlphaMode != DSTALPHA_ALPHA_PASS) //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
+  {
+    uid_data->fog_fsel = bpmem.fog.c_proj_fsel.fsel; //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
+    uid_data->fog_proj = bpmem.fog.c_proj_fsel.proj; //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
+    uid_data->fog_RangeBaseEnabled = bpmem.fogRange.Base.Enabled; //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
+  }
+//gvx64  uid_data->fog_fsel = bpmem.fog.c_proj_fsel.fsel;
+//gvx64  uid_data->fog_proj = bpmem.fog.c_proj_fsel.proj;
+//gvx65  uid_data->fog_RangeBaseEnabled = bpmem.fogRange.Base.Enabled;
 
   return out;
 }
@@ -505,7 +514,8 @@ ShaderCode GeneratePixelShaderCode(APIType ApiType, const pixel_shader_uid_data*
   const bool use_dual_source =
       g_ActiveConfig.backend_info.bSupportsDualSourceBlend &&
       (!DriverDetails::HasBug(DriverDetails::BUG_BROKEN_DUAL_SOURCE_BLENDING) ||
-       uid_data->useDstAlpha);
+       uid_data->dstAlphaMode == DSTALPHA_DUAL_SOURCE_BLEND); //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
+//gvx64       uid_data->useDstAlpha);
 
   if (ApiType == APIType::OpenGL || ApiType == APIType::Vulkan)
   {
@@ -790,7 +800,9 @@ ShaderCode GeneratePixelShaderCode(APIType ApiType, const pixel_shader_uid_data*
     out.Write("\tprev.rgb = (prev.rgb - (prev.rgb >> 6)) + abs(dither.y * 3 - dither.x * 2);\n");
   }
 
-  WriteFog(out, uid_data);
+//gvx64  WriteFog(out, uid_data);
+  if (uid_data->dstAlphaMode != DSTALPHA_ALPHA_PASS) //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
+    WriteFog(out, uid_data); //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
 
   // Write the color and alpha values to the framebuffer
   WriteColor(out, uid_data, use_dual_source);
@@ -1331,7 +1343,8 @@ static void WriteColor(ShaderCode& out, const pixel_shader_uid_data* uid_data, b
 
   // Colors will be blended against the 8-bit alpha from ocol1 and
   // the 6-bit alpha from ocol0 will be written to the framebuffer
-  if (!uid_data->useDstAlpha)
+//gvx64  if (!uid_data->useDstAlpha)
+  if (uid_data->dstAlphaMode == DSTALPHA_NONE) //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
   {
     out.Write("\tocol0.a = float(prev.a >> 2) / 63.0;\n");
     if (use_dual_source)
@@ -1345,7 +1358,8 @@ static void WriteColor(ShaderCode& out, const pixel_shader_uid_data* uid_data, b
     // Use dual-source color blending to perform dst alpha in a single pass
     if (use_dual_source)
     {
-      if (uid_data->useDstAlpha)
+//gvx64      if (uid_data->useDstAlpha)
+      if (uid_data->dstAlphaMode == DSTALPHA_DUAL_SOURCE_BLEND) //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
         out.Write("\tocol1.a = float(prev.a) / 255.0;\n");
       else
         out.Write("\tocol1.a = float(" I_ALPHA ".a) / 255.0;\n");

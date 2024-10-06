@@ -29,6 +29,11 @@ public:
   // (the size of a double-layer Wii disc).
   u64 GetDataSize() const override;
 
+  bool IsDataSizeAccurate() const override { return false; } //gvx64 rollforward to 5.0-12188 - implement .rvz support
+
+  u64 GetBlockSize() const override { return m_wbfs_sector_size; } //gvx64 rollforward to 5.0-12188 - implement .rvz support
+  bool HasFastRandomAccessInBlock() const override { return true; } //gvx64 rollforward to 5.0-12188 - implement .rvz support
+
   u64 GetRawSize() const override { return m_size; }
   bool Read(u64 offset, u64 nbytes, u8* out_ptr) override;
 

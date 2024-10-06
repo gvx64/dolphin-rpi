@@ -477,13 +477,17 @@ Gen::OpArg DSPEmitter::M_SDSP_external_interrupt_waiting()
 
 Gen::OpArg DSPEmitter::M_SDSP_r_st(size_t index)
 {
-  return MDisp(R15, static_cast<int>(offsetof(SDSP, r.st[index])));
+//gvx64  return MDisp(R15, static_cast<int>(offsetof(SDSP, r.st[index])));
+  return MDisp(R15, static_cast<int>(offsetof(SDSP, r.st) + sizeof(SDSP::r.st[0]) * index)); //gvx64 rollforward to 5.0-13671
 }
 
 Gen::OpArg DSPEmitter::M_SDSP_reg_stack_ptr(size_t index)
 {
-  return MDisp(R15, static_cast<int>(offsetof(SDSP, reg_stack_ptr[index])));
+//gvx64  return MDisp(R15, static_cast<int>(offsetof(SDSP, reg_stack_ptr[index])));
+  return MDisp(R15, static_cast<int>(offsetof(SDSP, reg_stack_ptr) +
+                                     sizeof(SDSP::reg_stack_ptr[0]) * index)); //gvx64 rollforward to 5.0-13671
 }
+
 
 }  // namespace x86
 }  // namespace JIT

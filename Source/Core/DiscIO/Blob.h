@@ -25,6 +25,8 @@
 
 namespace DiscIO
 {
+enum class WIARVZCompressionType : u32; //gvx64 rollforward to 5.0-12188 - implement .rvz support
+
 // Increment CACHE_REVISION (ISOFile.cpp & GameFile.cpp) if the enum below is modified
 enum class BlobType
 {
@@ -34,7 +36,10 @@ enum class BlobType
   GCZ,
   CISO,
   WBFS,
-  TGC
+//gvx64  TGC
+  TGC, //gvx64 rollforward to 5.0-12188 - implement .rvz support
+  WIA, //gvx64 rollforward to 5.0-12188 - implement .rvz support
+  RVZ, //gvx64 rollforward to 5.0-12188 - implement .rvz support
 };
 
 class BlobReader
@@ -44,6 +49,11 @@ public:
   virtual BlobType GetBlobType() const = 0;
   virtual u64 GetRawSize() const = 0;
   virtual u64 GetDataSize() const = 0;
+  virtual bool IsDataSizeAccurate() const = 0; //gvx64 rollforward to 5.0-12188 - implement .rvz support
+
+  // Returns 0 if the format does not use blocks
+  virtual u64 GetBlockSize() const = 0; //gvx64 rollforward to 5.0-12188 - implement .rvz support
+  virtual bool HasFastRandomAccessInBlock() const = 0; //gvx64 rollforward to 5.0-12188 - implement .rvz support
 
   // NOT thread-safe - can't call this from multiple threads.
   virtual bool Read(u64 offset, u64 size, u8* out_ptr) = 0;
@@ -54,6 +64,12 @@ public:
     if (!Read(offset, sizeof(T), reinterpret_cast<u8*>(&temp)))
       return {};
     return Common::FromBigEndian(temp);
+  }
+
+  virtual bool SupportsReadWiiDecrypted() const { return false; } //gvx64 rollforward to 5.0-12188 - implement .rvz support
+  virtual bool ReadWiiDecrypted(u64 offset, u64 size, u8* out_ptr, u64 partition_data_offset) //gvx64 rollforward to 5.0-12188 - implement .rvz support
+  {
+    return false; //gvx64 rollforward to 5.0-12188 - implement .rvz support
   }
 
 protected:
@@ -158,5 +174,9 @@ bool CompressFileToBlob(const std::string& infile_path, const std::string& outfi
                         void* arg = nullptr);
 bool DecompressBlobToFile(const std::string& infile_path, const std::string& outfile_path,
                           CompressCB callback = nullptr, void* arg = nullptr);
+bool ConvertToWIAOrRVZ(BlobReader* infile, const std::string& infile_path,  //gvx64 rollforward to 5.0-12188 - implement .rvz support
+                       const std::string& outfile_path, bool rvz,  //gvx64 rollforward to 5.0-12188 - implement .rvz support
+                       WIARVZCompressionType compression_type, int compression_level,  //gvx64 rollforward to 5.0-12188 - implement .rvz support
+                       int chunk_size, CompressCB callback = nullptr, void* arg = nullptr);  //gvx64 rollforward to 5.0-12188 - implement .rvz support
 
 }  // namespace

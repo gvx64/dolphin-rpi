@@ -1149,7 +1149,8 @@ void ScheduleReads(u64 offset, u32 length, const DiscIO::Partition& partition, u
   // The variable dvd_offset tracks the actual offset on the DVD
   // that the disc drive starts reading at, which differs in two ways:
   // It's rounded to a whole ECC block and never uses Wii partition addressing.
-  u64 dvd_offset = DiscIO::VolumeWii::PartitionOffsetToRawOffset(offset, partition);
+//gvx64  u64 dvd_offset = DiscIO::VolumeWii::PartitionOffsetToRawOffset(offset, partition);
+  u64 dvd_offset = DVDThread::PartitionOffsetToRawOffset(offset, partition);  //gvx64 rollforward to 5.0-12188 - implement .rvz support
   dvd_offset = Common::AlignDown(dvd_offset, DVD_ECC_BLOCK_SIZE);
 
   if (SConfig::GetInstance().bFastDiscSpeed)

@@ -34,6 +34,7 @@ public:
   ~VolumeWAD();
   bool Read(u64 offset, u64 length, u8* buffer,
             const Partition& partition = PARTITION_NONE) const override;
+  const FileSystem* GetFileSystem(const Partition& partition = PARTITION_NONE) const override {}; //gvx64 rollforward to 5.0-12188 - implement .rvz support
   std::optional<u64> GetTitleID(const Partition& partition = PARTITION_NONE) const override;
   const IOS::ES::TMDReader& GetTMD(const Partition& partition = PARTITION_NONE) const override;
   std::string GetGameID(const Partition& partition = PARTITION_NONE) const override;

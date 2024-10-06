@@ -1,3 +1,74 @@
+############################GVX64 - Dolphin-Rpi-5.0-4544
+This is a fork of dolphin-emu that rolls back to commit 5.0-4544 (June 2017) 
+and implements numerous changes intended to resolve the rendering issue due 
+to the loss of alpha pass support that is currently impacting many Pi4/Pi5 users
+who are running Bookworm OS. In particular, the following modifications to 
+5.0-4544 have been made:
+* Re-implements the alpha pass feature that was removed in 5.0-1653
+* Implements changes in 5.0-13669 to resolve numerous compile-time errors
+  of the form "index is not a constant expression" that occurs when 
+  compiling legacy versions of dolphin on gcc-11
+* Implements support for .rvz files implemented in 5.0-12188
+* Resolves some other minor compiler errors.
+
+Note that when utilizing this build, it is recommended to only use the
+Vulkan backend.  While alpha pass has also been reintroduced for the
+GL/GLES backend, on Bookworm on the Pi there are major performance issues 
+with GLES 3.1 and it is unusable.
+
+
+Instructions for Building from Source:
+
+1. cd /home/pi
+
+2. sudo mkdir ./dolphin-rpi/
+
+3. sudo git clone https://github.com/gvx64/dolphin-rpi
+
+4. cd ./dolphin-rpi
+
+5. git submodule update --init --recursive
+
+Edit CMakeLists.txt options if needed. I turned off the following flags in the CMake file by default (you may want pulseaudio turned on for your machine):
+
+    USE_UPNP turned off
+    ENABLE_PULSEAUDIO turned off
+    ENABLE_ANALYTICS turned off
+    ENCODE_FRAMEDUMPS turned off
+
+1. sudo nano ./CMakeLists.txt
+
+If you haven't already done so, you may want to add the following packages (GTK2 is the only one that is essential but I installed these other ones as well on Bookworm):
+
+1. sudo apt-get install libevdev-dev libgtk2.0-dev libopenal-dev
+
+Also, make sure that Vulkan is installed on your Pi if you haven't already done so before proceeding further.
+
+Now lets configure:
+
+1. mkdir Build
+
+2. cd ./Build
+
+3. sudo cmake .. -DCMAKE_C_COMPILER=gcc-11 -DCMAKE_CXX_COMPILER=g++-11
+
+(note that you may need to sudo apt-get install gcc-11 and g++-11 if you don't have them installed by default on Bookworm)
+
+Finally build (this will take a while):
+
+1. sudo make -j4
+
+(note that if you encounter errors you should rebuild with -j1 as the error messages are sometimes a lot more descriptive when building with single core for some reason)
+
+EDIT: Optional step although possibly not recommended. This will put config/settings files in potentially inconvenient locations. I personally skip this step and just create my own config directory and specify its location with the "-u" option in the emulators.cfg file.
+
+1. sudo make install
+
+You should now have a couple of dolphin binaries in the ../Build/Binaries folder. If you are RetroPie user, you can add them to your /opt/retropie/configs/gc/emulators.cfg list the way that I have done:
+
+1. dolphin-5.0-4544-nogui = "XINIT-WM: /home/pi/dolphin-rpi/dolphin-rpi/Build/Binaries/dolphin-emu-nogui -e %ROM% -u /home/pi/DolphinConfig5.0/"
+
+
 # Dolphin - A GameCube and Wii Emulator
 
 [Homepage](https://dolphin-emu.org/) | [Project Site](https://github.com/dolphin-emu/dolphin) | [Forums](https://forums.dolphin-emu.org/) | [Wiki](https://wiki.dolphin-emu.org/) | [Issue Tracker](https://bugs.dolphin-emu.org/projects/emulator/issues) | [Coding Style](https://github.com/dolphin-emu/dolphin/blob/master/Contributing.md) | [Transifex Page](https://www.transifex.com/projects/p/dolphin-emu/)

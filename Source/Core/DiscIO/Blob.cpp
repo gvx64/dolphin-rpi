@@ -19,6 +19,7 @@
 #include "DiscIO/DriveBlob.h"
 #include "DiscIO/FileBlob.h"
 #include "DiscIO/TGCBlob.h"
+#include "DiscIO/WIABlob.h" //gvx64 rollforward to 5.0-12188 - implement .rvz support
 #include "DiscIO/WbfsBlob.h"
 
 namespace DiscIO
@@ -200,6 +201,10 @@ std::unique_ptr<BlobReader> CreateBlobReader(const std::string& filename)
     return TGCFileReader::Create(std::move(file));
   case WBFS_MAGIC:
     return WbfsFileReader::Create(std::move(file), filename);
+  case WIA_MAGIC:	//gvx64 rollforward to 5.0-12188 - implement .rvz support
+    return WIAFileReader::Create(std::move(file), filename);	//gvx64 rollforward to 5.0-12188 - implement .rvz support
+  case RVZ_MAGIC:	//gvx64 rollforward to 5.0-12188 - implement .rvz support
+    return RVZFileReader::Create(std::move(file), filename);	//gvx64 rollforward to 5.0-12188 - implement .rvz support
   default:
     return PlainFileReader::Create(std::move(file));
   }

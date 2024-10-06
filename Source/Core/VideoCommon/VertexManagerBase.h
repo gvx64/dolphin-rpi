@@ -86,7 +86,8 @@ private:
   size_t m_flush_count_4_3 = 0;
   size_t m_flush_count_anamorphic = 0;
 
-  virtual void vFlush() = 0;
+//gvx64  virtual void vFlush() = 0;
+  virtual void vFlush(bool useDstAlpha) = 0; //gvx64 - Rollback to 5.0-1651 - Reintroduce Vulkan Alpha Pass
 
   virtual void CreateDeviceObjects() {}
   virtual void DestroyDeviceObjects() {}

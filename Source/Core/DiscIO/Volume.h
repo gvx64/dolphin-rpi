@@ -21,6 +21,7 @@
 namespace DiscIO
 {
 enum class BlobType;
+class FileSystem; //gvx64 rollforward to 5.0-12188 - implement .rvz support
 
 struct Partition final
 {
@@ -51,6 +52,12 @@ public:
       return {};
     return Common::FromBigEndian(temp);
   }
+  std::optional<u64> ReadSwappedAndShifted(u64 offset, const Partition& partition) const //gvx64 rollforward to 5.0-12188 - implement .rvz support
+  {
+    const std::optional<u32> temp = ReadSwapped<u32>(offset, partition); //gvx64 rollforward to 5.0-12188 - implement .rvz support
+    return temp ? static_cast<u64>(*temp) << GetOffsetShift() : std::optional<u64>(); //gvx64 rollforward to 5.0-12188 - implement .rvz support
+  }
+  virtual bool IsEncryptedAndHashed() const { return false; } //gvx64 rollforward to 5.0-12188 - implement .rvz support
   virtual std::vector<Partition> GetPartitions() const { return {}; }
   virtual Partition GetGamePartition() const { return PARTITION_NONE; }
   std::optional<u64> GetTitleID() const { return GetTitleID(GetGamePartition()); }
@@ -60,6 +67,11 @@ public:
     return INVALID_TICKET;
   }
   virtual const IOS::ES::TMDReader& GetTMD(const Partition& partition) const { return INVALID_TMD; }
+  virtual const FileSystem* GetFileSystem(const Partition& partition) const = 0; //gvx64 rollforward to 5.0-12188 - implement .rvz support
+  virtual u64 PartitionOffsetToRawOffset(u64 offset, const Partition& partition) const //gvx64 rollforward to 5.0-12188 - implement .rvz support
+  {
+    return offset; //gvx64 rollforward to 5.0-12188 - implement .rvz support
+  }
   std::string GetGameID() const { return GetGameID(GetGamePartition()); }
   virtual std::string GetGameID(const Partition& partition) const = 0;
   std::string GetMakerID() const { return GetMakerID(GetGamePartition()); }
@@ -106,6 +118,7 @@ protected:
       return CP1252ToUTF8(string);
   }
 
+  virtual u32 GetOffsetShift() const { return 0; } //gvx64 rollforward to 5.0-12188 - implement .rvz support
   static std::map<Language, std::string> ReadWiiNames(const std::vector<u8>& data);
 
   static const size_t NUMBER_OF_LANGUAGES = 10;
@@ -117,6 +130,11 @@ protected:
   static const IOS::ES::TMDReader INVALID_TMD;
 };
 
+class VolumeDisc : public Volume //gvx64 rollforward to 5.0-12188 - implement .rvz support
+{
+};
+
+std::unique_ptr<VolumeDisc> CreateDisc(const std::string& path); //gvx64 rollforward to 5.0-12188 - implement .rvz support
 std::unique_ptr<Volume> CreateVolumeFromFilename(const std::string& filename);
 std::unique_ptr<Volume> CreateVolumeFromDirectory(const std::string& directory, bool is_wii,
                                                   const std::string& apploader = "",
