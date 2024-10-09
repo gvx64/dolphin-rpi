@@ -1,4 +1,5 @@
-############################GVX64 - Dolphin-Rpi-5.0-4544
+GVX64 - Dolphin-Rpi-5.0-4544
+
 This is a fork of dolphin-emu that rolls back to commit 5.0-4544 (June 2017) 
 and implements numerous changes intended to resolve the rendering issue due 
 to the loss of alpha pass support that is currently impacting many Pi4/Pi5 users
@@ -8,7 +9,7 @@ who are running Bookworm OS. In particular, the following modifications to
 * Implements changes in 5.0-13669 to resolve numerous compile-time errors
   of the form "index is not a constant expression" that occurs when 
   compiling legacy versions of dolphin on gcc-11
-* Implements support for .rvz files implemented in 5.0-12188
+* Back-patches support for .rvz files that was implemented in 5.0-12188
 * Resolves some other minor compiler errors.
 
 Note that when utilizing this build, it is recommended to only use the
@@ -21,13 +22,11 @@ Instructions for Building from Source:
 
 1. cd /home/pi
 
-2. sudo mkdir ./dolphin-rpi/
+2. sudo git clone https://github.com/gvx64/dolphin-rpi
 
-3. sudo git clone https://github.com/gvx64/dolphin-rpi
+3. cd ./dolphin-rpi
 
-4. cd ./dolphin-rpi
-
-5. git submodule update --init --recursive
+4. git submodule update --init --recursive
 
 Edit CMakeLists.txt options if needed. I turned off the following flags in the CMake file by default (you may want pulseaudio turned on for your machine):
 
@@ -64,7 +63,7 @@ EDIT: Optional step although possibly not recommended. This will put config/sett
 
 1. sudo make install
 
-You should now have a couple of dolphin binaries in the ../Build/Binaries folder. If you are RetroPie user, you can add them to your /opt/retropie/configs/gc/emulators.cfg list the way that I have done:
+You should now have a couple of dolphin binaries in the ../Build/Binaries folder. If you are a RetroPie user, you can add them to your /opt/retropie/configs/gc/emulators.cfg list the way that I have done:
 
 1. dolphin-5.0-4544-nogui = "XINIT-WM: /home/pi/dolphin-rpi/dolphin-rpi/Build/Binaries/dolphin-emu-nogui -e %ROM% -u /home/pi/DolphinConfig5.0/"
 
