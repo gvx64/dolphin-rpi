@@ -9,7 +9,7 @@ who are running Bookworm OS. In particular, the following modifications to
 * Implements changes in 5.0-13669 to resolve numerous compile-time errors
   of the form "index is not a constant expression" that occurs when 
   compiling legacy versions of dolphin on gcc-11
-* Back-patches support for .rvz files that was implemented in 5.0-12188
+* Rolls forward code to add support for .rvz files that was implemented in 5.0-12188
 * Resolves some other minor compiler errors.
 
 Note that when utilizing this build, it is recommended to only use the
@@ -28,18 +28,19 @@ Instructions for Building from Source:
 
 4. git submodule update --init --recursive
 
-Edit CMakeLists.txt options if needed. I turned off the following flags in the CMake file by default (you may want pulseaudio turned on for your machine):
+Edit CMakeLists.txt options if needed. I turned off/on the following flags in the CMake file by default (you may want pulseaudio turned on for your machine):
 
     USE_UPNP turned off
     ENABLE_PULSEAUDIO turned off
     ENABLE_ANALYTICS turned off
     ENCODE_FRAMEDUMPS turned off
+    ENABLE_QT2 turned on
 
 1. sudo nano ./CMakeLists.txt
 
-If you haven't already done so, you may want to add the following packages (GTK2 is the only one that is essential but I installed these other ones as well on Bookworm):
+If you haven't already done so, you may want to add the following packages:
 
-1. sudo apt-get install libevdev-dev libgtk2.0-dev libopenal-dev
+1. sudo apt-get install libevdev-dev libgtk2.0-dev libopenal-dev qtbase5-private-dev
 
 Also, make sure that Vulkan is installed on your Pi if you haven't already done so before proceeding further.
 
@@ -63,9 +64,12 @@ EDIT: Optional step although possibly not recommended. This will put config/sett
 
 1. sudo make install
 
-You should now have a couple of dolphin binaries in the ../Build/Binaries folder. If you are a RetroPie user, you can add them to your /opt/retropie/configs/gc/emulators.cfg list the way that I have done:
+Anyways, assuming that there are no errors (please let me know if there are), this should get you three dolphin binaries in the ../Build/Binaries folder. You can add them to your /opt/retropie/configs/gc/emulators.cfg list the way that I have done. Note that I have set up both entries that can launch games from es as well as entries that are intended for settings configuration and that will only take you to the gui screen. If you would like to enable hotkeys, please setup your hotkeys using the hotkey-configure option below and note that in order for hotkeys to work you will need to launch your games using the dolphin-5.0-4544 core (the nogui core does not support hotkeys):
 
-1. dolphin-5.0-4544-nogui = "XINIT-WM: /home/pi/dolphin-rpi/dolphin-rpi/Build/Binaries/dolphin-emu-nogui -e %ROM% -u /home/pi/DolphinConfig5.0/"
+	dolphin-5.0-4544-nogui = "XINIT-WM: /home/pi/dolphin-rpi/dolphin-rpi/Build/Binaries/dolphin-emu-nogui -e %ROM% -u /home/pi/DolphinConfig5.0/"
+	dolphin-5.0-4544 = "XINIT-WM: /home/pi/dolphin-rpi/dolphin-rpi/Build/Binaries/dolphin-emu -e %ROM% -u /home/pi/DolphinConfig5.0/"
+	dolphin-5.0-4544-configure = "XINIT-WM: /home/pi/dolphin-rpi/dolphin-rpi/Build/Binaries/dolphin-emu -u /home/pi/DolphinConfig5.0/"
+	dolphin-5.0-4544-configure-hotkeys = "XINIT-WM: /home/pi/dolphin-rpi/dolphin-rpi/Build/Binaries/dolphin-emu-qt2 -u /home/pi/DolphinConfig5.0/"
 
 
 # Dolphin - A GameCube and Wii Emulator
