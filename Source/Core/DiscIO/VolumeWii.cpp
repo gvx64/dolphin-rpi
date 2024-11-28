@@ -138,6 +138,11 @@ bool VolumeWii::Read(u64 _ReadOffset, u64 _Length, u8* _pBuffer, const Partition
   mbedtls_aes_context* aes_context = it->second.get();
 
   std::vector<u8> read_buffer(BLOCK_TOTAL_SIZE);
+
+  const u64 partition_data_offset = partition.offset + PARTITION_DATA_OFFSET; //gvx64 correct Wii rvz support
+  if (m_pReader->SupportsReadWiiDecrypted()) //gvx64 correct Wii rvz support
+    return m_pReader->ReadWiiDecrypted(_ReadOffset, _Length, _pBuffer, partition_data_offset); //gvx64 correct Wii rvz support
+
   while (_Length > 0)
   {
     // Calculate offsets

@@ -10,6 +10,7 @@ who are running Bookworm OS. In particular, the following modifications to
   of the form "index is not a constant expression" that occurs when 
   compiling legacy versions of dolphin on gcc-11
 * Rolls forward code to add support for .rvz files that was implemented in 5.0-12188
+* Implements patch from https://github.com/mimimi085181/dolphin which corrects rendering issues when EFBToTextureEnable is turned on in The Last Story
 * Resolves some other minor compiler errors.
 
 Note that when utilizing this build, it is recommended to only use the
@@ -64,7 +65,7 @@ EDIT: Optional step although possibly not recommended. This will put config/sett
 
 1. sudo make install
 
-Anyways, assuming that there are no errors (please let me know if there are), this should get you three dolphin binaries in the ../Build/Binaries folder. You can add them to your /opt/retropie/configs/gc/emulators.cfg list the way that I have done. Note that I have set up both entries that can launch games from es as well as entries that are intended for settings configuration and that will only take you to the gui screen. If you would like to enable hotkeys, please setup your hotkeys using the hotkey-configure option below and note that in order for hotkeys to work you will need to launch your games using the dolphin-5.0-4544 core (the nogui core does not support hotkeys):
+Anyways, assuming that there are no errors, this should get you three dolphin binaries in the ../Build/Binaries folder. You can add them to your /opt/retropie/configs/gc/emulators.cfg list the way that I have done. Note that I have set up both entries that can launch games from es as well as entries that are intended for settings configuration and that will only take you to the gui screen. If you would like to enable hotkeys, please setup your hotkeys using the hotkey-configure option below and note that in order for hotkeys to work you will need to launch your games using the dolphin-5.0-4544 core (the nogui core does not support hotkeys):
 
 	dolphin-5.0-4544-nogui = "XINIT-WM: /home/pi/dolphin-rpi/dolphin-rpi/Build/Binaries/dolphin-emu-nogui -e %ROM% -u /home/pi/DolphinConfig5.0/"
 	dolphin-5.0-4544 = "XINIT-WM: /home/pi/dolphin-rpi/dolphin-rpi/Build/Binaries/dolphin-emu -e %ROM% -u /home/pi/DolphinConfig5.0/"

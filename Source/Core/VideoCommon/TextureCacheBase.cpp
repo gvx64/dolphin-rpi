@@ -1264,25 +1264,50 @@ void TextureCacheBase::CopyRenderTargetToTexture(u32 dstAddr, unsigned int dstFo
   bool copy_to_ram = !g_ActiveConfig.bSkipEFBCopyToRam;
   bool copy_to_vram = true;
 
-  if (copy_to_ram)
+//gvx64  if (copy_to_ram)
+printf("SConfig::GetInstance().GetGameID().substr(0,3) ==  SLS => %d\n", SConfig::GetInstance().GetGameID().substr(0,3) == "SLS" );
+  if ( SConfig::GetInstance().GetGameID().substr(0,3) == "SLS") //gvx64 - if game is Last Story, apply hack to fix invisible clothing when EFBToTextureEnable = True (https://github.com/mimimi085181/dolphin)
   {
-    EFBCopyFormat format(srcFormat, static_cast<TextureFormat>(dstFormat));
-    CopyEFB(dst, format, tex_w, bytes_per_row, num_blocks_y, dstStride, is_depth_copy, srcRect,
-            scaleByHalf);
-  }
-  else
-  {
-    // Hack: Most games don't actually need the correct texture data in RAM
-    //       and we can just keep a copy in VRAM. We zero the memory so we
-    //       can check it hasn't changed before using our copy in VRAM.
-    u8* ptr = dst;
-    for (u32 i = 0; i < num_blocks_y; i++)
+    if (copy_to_ram || ((tex_w == 64 || tex_w == 128 || tex_w == 256) && !isIntensity && tex_h != 1 && (dstFormat == 6 || dstFormat == 32)))
     {
-      memset(ptr, 0, bytes_per_row);
-      ptr += dstStride;
+      EFBCopyFormat format(srcFormat, static_cast<TextureFormat>(dstFormat));
+      CopyEFB(dst, format, tex_w, bytes_per_row, num_blocks_y, dstStride, is_depth_copy, srcRect,
+              scaleByHalf);
+    }
+    else
+    {
+      // Hack: Most games don't actually need the correct texture data in RAM
+      //       and we can just keep a copy in VRAM. We zero the memory so we
+      //       can check it hasn't changed before using our copy in VRAM.
+      u8* ptr = dst;
+      for (u32 i = 0; i < num_blocks_y; i++)
+      {
+        memset(ptr, 0, bytes_per_row);
+        ptr += dstStride;
+      }
     }
   }
-
+  else //gvx64 - if not Last Story, then proceed normally
+  {
+    if (copy_to_ram)
+    {
+      EFBCopyFormat format(srcFormat, static_cast<TextureFormat>(dstFormat));
+      CopyEFB(dst, format, tex_w, bytes_per_row, num_blocks_y, dstStride, is_depth_copy, srcRect,
+              scaleByHalf);
+    }
+    else
+    {
+      // Hack: Most games don't actually need the correct texture data in RAM
+      //       and we can just keep a copy in VRAM. We zero the memory so we
+      //       can check it hasn't changed before using our copy in VRAM.
+      u8* ptr = dst;
+      for (u32 i = 0; i < num_blocks_y; i++)
+      {
+        memset(ptr, 0, bytes_per_row);
+        ptr += dstStride;
+      }
+    }
+  }
   if (g_bRecordFifoData)
   {
     // Mark the memory behind this efb copy as dynamicly generated for the Fifo log
