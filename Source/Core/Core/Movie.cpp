@@ -1272,26 +1272,29 @@ void PlayController(GCPadStatus* PadStatus, int controllerID)
     // This implementation assumes the disc change will only happen once. Trying
     // to change more than that will cause it to load the last disc every time.
     // As far as I know, there are no 3+ disc games, so this should be fine.
-    bool found = false;
-    std::string path;
-    for (const std::string& iso_folder : SConfig::GetInstance().m_ISOFolder)
-    {
-      path = iso_folder + '/' + s_discChange;
-      if (File::Exists(path))
+//gvx64    bool found = false;
+//gvx64    std::string path;
+//gvx64    for (const std::string& iso_folder : SConfig::GetInstance().m_ISOFolder)
+//gvx64    {
+//gvx64      path = iso_folder + '/' + s_discChange;
+//gvx64      if (File::Exists(path))
+      if (!DVDInterface::AutoChangeDisc()) //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
       {
-        found = true;
-        break;
+//gvx64        found = true;
+//gvx64        break;
+        CPU::Break(); //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
+        PanicAlertT("Change the disc to %s", s_discChange.c_str()); //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
       }
-    }
-    if (found)
-    {
-      DVDInterface::ChangeDiscAsCPU(path);
-    }
-    else
-    {
-      CPU::Break();
-      PanicAlertT("Change the disc to %s", s_discChange.c_str());
-    }
+//gvx64    }
+//gvx64    if (found)
+//gvx64    {
+//gvx64      DVDInterface::ChangeDiscAsCPU(path);
+//gvx64    }
+//gvx64    else
+//gvx64    {
+//gvx64      CPU::Break();
+//gvx64      PanicAlertT("Change the disc to %s", s_discChange.c_str());
+//gvx64    }
   }
 
   if (s_padState.reset)

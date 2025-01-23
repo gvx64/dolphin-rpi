@@ -410,6 +410,7 @@ unsigned int NetPlayClient::OnData(sf::Packet& packet)
       packet >> g_NetPlaySettings.m_CPUthread;
       packet >> g_NetPlaySettings.m_CPUcore;
       packet >> g_NetPlaySettings.m_EnableCheats;
+      packet >> g_NetPlaySettings.m_ChangeDiscsAutomatically; //gvx64
       packet >> g_NetPlaySettings.m_SelectedLanguage;
       packet >> g_NetPlaySettings.m_OverrideGCLanguage;
       packet >> g_NetPlaySettings.m_ProgressiveScan;

@@ -61,7 +61,7 @@ bool Exists(const std::string& filename)
 #else
   int result = stat(filename.c_str(), &file_info);
 #endif
-
+//gvx64 printf("../Source/Core/Common/FileUtil.cpp, Exists(), filename.c_str() = %s\n", filename.c_str()); //gvx64
   return (result == 0);
 }
 

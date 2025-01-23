@@ -14,6 +14,7 @@ struct NetSettings
   bool m_CPUthread;
   int m_CPUcore;
   bool m_EnableCheats;
+  bool m_ChangeDiscsAutomatically; //gvx64
   int m_SelectedLanguage;
   bool m_OverrideGCLanguage;
   bool m_ProgressiveScan;

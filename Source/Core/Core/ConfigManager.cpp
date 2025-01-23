@@ -251,6 +251,7 @@ void SConfig::SaveCoreSettings(IniFile& ini)
   core->Set("DVDRoot", m_strDVDRoot);
   core->Set("Apploader", m_strApploader);
   core->Set("EnableCheats", bEnableCheats);
+  core->Set("ChangeDiscsAutomatically", bChangeDiscsAutomatically); //gvx64
   core->Set("SelectedLanguage", SelectedLanguage);
   core->Set("OverrideGCLang", bOverrideGCLanguage);
   core->Set("DPL2Decoder", bDPL2Decoder);
@@ -565,6 +566,7 @@ void SConfig::LoadCoreSettings(IniFile& ini)
   core->Get("DVDRoot", &m_strDVDRoot);
   core->Get("Apploader", &m_strApploader);
   core->Get("EnableCheats", &bEnableCheats, false);
+  core->Get("ChangeDiscsAutomatically", &bChangeDiscsAutomatically, false); //gvx64
   core->Get("SelectedLanguage", &SelectedLanguage, 0);
   core->Get("OverrideGCLang", &bOverrideGCLanguage, false);
   core->Get("DPL2Decoder", &bDPL2Decoder, false);

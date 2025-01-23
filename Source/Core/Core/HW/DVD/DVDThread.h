@@ -46,6 +46,7 @@ DiscIO::Platform GetDiscType();
 u64 PartitionOffsetToRawOffset(u64 offset, const DiscIO::Partition& partition); //gvx64 rollforward to 5.0-12188 - implement .rvz support
 IOS::ES::TMDReader GetTMD(const DiscIO::Partition& partition);
 IOS::ES::TicketReader GetTicket(const DiscIO::Partition& partition);
+bool IsInsertedDiscRunning(); //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
 // This function returns true and calls SConfig::SetRunningGameMetadata(Volume&, Partition&)
 // if both of the following conditions are true:
 // - A disc is inserted

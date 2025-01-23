@@ -9,7 +9,7 @@
 #include "Common/TypeUtils.h"
 
 template <std::size_t position, std::size_t bits, typename T, typename StorageType>
-struct BitField;
+struct BitFieldEnum; //gvx64 resolve conflicting number of arguments for BitField struct
 
 namespace Common
 {
@@ -46,13 +46,13 @@ public:
   // would work (but since BitField is used for game-generated data, we need to be careful about
   // bounds-checking)
   template <std::size_t position, std::size_t bits, typename StorageType>
-  constexpr const V& operator[](BitField<position, bits, T, StorageType> key) const
+  constexpr const V& operator[](BitFieldEnum<position, bits, T, StorageType> key) const
   {
     static_assert(1 << bits == s_size, "Unsafe indexing into EnumMap (may go out of bounds)");
     return m_array[static_cast<std::size_t>(key.Value())];
   }
   template <std::size_t position, std::size_t bits, typename StorageType>
-  constexpr V& operator[](BitField<position, bits, T, StorageType> key)
+  constexpr V& operator[](BitFieldEnum<position, bits, T, StorageType> key)
   {
     static_assert(1 << bits == s_size, "Unsafe indexing into EnumMap (may go out of bounds)");
     return m_array[static_cast<std::size_t>(key.Value())];

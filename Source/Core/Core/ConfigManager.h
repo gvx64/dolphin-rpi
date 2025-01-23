@@ -105,6 +105,7 @@ struct SConfig : NonCopyable
   bool bForceNTSCJ = false;
   bool bHLE_BS2 = true;
   bool bEnableCheats = false;
+  bool bChangeDiscsAutomatically = false; //gvx64
   bool bEnableMemcardSdWriting = true;
   bool bCopyWiiSaveNetplay = true;
 

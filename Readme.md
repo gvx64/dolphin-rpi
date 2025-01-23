@@ -10,6 +10,7 @@ who are running Bookworm OS. In particular, the following modifications to
   of the form "index is not a constant expression" that occurs when 
   compiling legacy versions of dolphin on gcc-11
 * Rolls forward code to add support for .rvz files that was implemented in 5.0-12188
+* Rolls forwards code to add support for .m3u files and automatic disc changing implemented in 5.0-9343
 * Implements patch from https://github.com/mimimi085181/dolphin which corrects rendering issues when EFBToTextureEnable is turned on in The Last Story
 * Resolves some other minor compiler errors.
 
@@ -71,6 +72,24 @@ Anyways, assuming that there are no errors, this should get you three dolphin bi
 	dolphin-5.0-4544 = "XINIT-WM: /home/pi/dolphin-rpi/dolphin-rpi/Build/Binaries/dolphin-emu -e %ROM% -u /home/pi/DolphinConfig5.0/"
 	dolphin-5.0-4544-configure = "XINIT-WM: /home/pi/dolphin-rpi/dolphin-rpi/Build/Binaries/dolphin-emu -u /home/pi/DolphinConfig5.0/"
 	dolphin-5.0-4544-configure-hotkeys = "XINIT-WM: /home/pi/dolphin-rpi/dolphin-rpi/Build/Binaries/dolphin-emu-qt2 -u /home/pi/DolphinConfig5.0/"
+
+
+
+Instructions for creating and running m3u files:
+
+Begin by adding the following line to /home/pi/DolphinConfig5.0/Config/Dolphin.ini under the "Core" heading or by checking "Change Discs Automatically" in Config->General Tab in the user interface.
+
+	[Core]
+	AutoDiscChange = True
+
+Next, create an m3u file using a text editor such as nano in your /home/pi/RetroPie/roms/gc/ directory with the name of the multi-disc game:
+	BatenKaitosEternalWings.m3u
+
+Populate the m3u file with the name of the individual game files similar to as shown below (note: do not use quotations or escape characters in the filename):
+	BatenKaitosEternalWingsDisc01.rvz
+	BatenKaitosEternalWingsDisc02.rvz
+
+Save and close the file.  You should now be able to open the m3u file in RetroPie using dolphin-rpi-nogui as the core or within the user interface of dolphin-rpi if you are in your Pi's deskop.  Note that m3u files will not show up on the gamelist within the dolphin-rpi gui, but can be accessed by selecting File->Open
 
 
 # Dolphin - A GameCube and Wii Emulator

@@ -26,6 +26,7 @@ set(SRCS
   Boot/ElfReader.cpp
   Config/Config.cpp
   Config/GraphicsSettings.cpp
+  Config/MainSettings.cpp #gvx64 roll-forward to 5.0-9343 to introduce m3u file support
   ConfigLoaders/BaseConfigLoader.cpp
   ConfigLoaders/GameConfigLoader.cpp
   ConfigLoaders/IsSettingSaveable.cpp

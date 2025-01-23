@@ -726,6 +726,7 @@ bool GameListCtrl::SyncCacheFile(bool write)
   {
     // If some file operation failed, try to delete the probably-corrupted cache
     f.Close();
+//gvx64printf("../Source/Core/DolphinWX/GameListCtrl.cpp, SyncCacheFile, filename to be deleted = %s\n", filename.c_str());
     File::Delete(filename);
   }
   return success;
@@ -742,12 +743,16 @@ void GameListCtrl::RescanList()
 
   post_status(_("Scanning..."));
 
-  const std::vector<std::string> search_extensions = {".gcm",  ".tgc", ".iso", ".ciso", ".gcz",
+  const std::vector<std::string> search_extensions = {".gcm",  ".tgc", ".iso", ".rvz", ".m3u", ".ciso", ".gcz",
                                                       ".wbfs", ".wad", ".dol", ".elf"};
   // TODO This could process paths iteratively as they are found
   auto search_results = Common::DoFileSearch(SConfig::GetInstance().m_ISOFolder, search_extensions,
                                              SConfig::GetInstance().m_RecursiveISOFolder);
 
+//gvx64  for (const auto &str : decltype(search_results)(search_results)) //gvx64
+//gvx64  { //gvx64
+//gvx64    printf("../Source/Core/DolphinWX/GameListCtrl.cpp, RescanList(), auto= %s\n", str.c_str() ); //gvx64
+//gvx64  } //gvx64
   std::vector<std::string> cached_paths;
   for (const auto& file : m_cached_files)
     cached_paths.emplace_back(file->GetFileName());
@@ -757,6 +762,7 @@ void GameListCtrl::RescanList()
   std::set_difference(cached_paths.cbegin(), cached_paths.cend(), search_results.cbegin(),
                       search_results.cend(), std::back_inserter(removed_paths));
 
+//gvx64 printf("../Source/Core/DolphinWX/GameListCtrl.cpp, RescanList(), removed_paths= %s\n", removed_paths.front().c_str() ); //gvx64
   std::vector<std::string> new_paths;
   std::set_difference(search_results.cbegin(), search_results.cend(), cached_paths.cbegin(),
                       cached_paths.cend(), std::back_inserter(new_paths));
@@ -766,6 +772,10 @@ void GameListCtrl::RescanList()
     std::unique_lock<std::mutex> lk(m_title_database_mutex);
     m_title_database = {};
   }
+
+//gvx64  for (const std::string& str : new_paths) { //gvx64
+//gvx64    printf("../Source/Core/DolphinWX/GameListCtrl.cpp, RescanList(), new_paths= %s\n", str.c_str());  //gvx64
+//gvx64  } //gvx64
 
   // For now, only scan new_paths. This could cause false negatives (file actively being written),
   // but otherwise should be fine.

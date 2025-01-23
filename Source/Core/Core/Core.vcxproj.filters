@@ -876,6 +876,9 @@
     <ClCompile Include="Config\GraphicsSettings.cpp">
       <Filter>Config</Filter>
     </ClCompile>
+    <ClCompile Include="Config\MainSettings.cpp">
+      <Filter>Config</Filter>
+    </ClCompile>
     <ClCompile Include="IOS\Network\NCD\WiiNetConfig.cpp">
       <Filter>IOS\Network\NCD</Filter>
     </ClCompile>
@@ -1525,6 +1528,9 @@
       <Filter>Config</Filter>
     </ClInclude>
     <ClInclude Include="Config\GraphicsSettings.h">
+      <Filter>Config</Filter>
+    </ClInclude>
+    <ClInclude Include="Config\MainSettings.h">
       <Filter>Config</Filter>
     </ClInclude>
     <ClInclude Include="IOS\Network\NCD\WiiNetConfig.h">

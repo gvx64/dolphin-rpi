@@ -55,6 +55,7 @@ void GeneralConfigPane::InitializeGUI()
 
   m_dual_core_checkbox = new wxCheckBox(this, wxID_ANY, _("Enable Dual Core (speedup)"));
   m_cheats_checkbox = new wxCheckBox(this, wxID_ANY, _("Enable Cheats"));
+  m_disc_auto_checkbox = new wxCheckBox(this, wxID_ANY, _("Change Discs Automatically")); //gvx64
   m_force_ntscj_checkbox = new wxCheckBox(this, wxID_ANY, _("Force Console as NTSC-J"));
 #if defined(USE_ANALYTICS) && USE_ANALYTICS
   m_analytics_checkbox = new wxCheckBox(this, wxID_ANY, _("Enable Usage Statistics Reporting"));
@@ -75,6 +76,7 @@ void GeneralConfigPane::InitializeGUI()
       _("Splits the CPU and GPU threads so they can be run on separate cores.\nProvides major "
         "speed improvements on most modern PCs, but can cause occasional crashes/glitches."));
   m_cheats_checkbox->SetToolTip(_("Enables the use of Action Replay and Gecko cheats."));
+  m_disc_auto_checkbox->SetToolTip(_("Enables the automatic changing of game discs for multi-disc games.")); //gvx64
   m_force_ntscj_checkbox->SetToolTip(
       _("Forces NTSC-J mode for using the Japanese ROM font.\nIf left unchecked, Dolphin defaults "
         "to NTSC-U and automatically enables this setting when playing Japanese games."));
@@ -109,6 +111,8 @@ void GeneralConfigPane::InitializeGUI()
   basic_settings_sizer->Add(m_dual_core_checkbox, 0, wxLEFT | wxRIGHT, space5);
   basic_settings_sizer->AddSpacer(space5);
   basic_settings_sizer->Add(m_cheats_checkbox, 0, wxLEFT | wxRIGHT, space5);
+  basic_settings_sizer->AddSpacer(space5); //gxv64
+  basic_settings_sizer->Add(m_disc_auto_checkbox, 0, wxLEFT | wxRIGHT, space5); //gvx64
   basic_settings_sizer->AddSpacer(space5);
   basic_settings_sizer->Add(throttler_sizer);
 
@@ -150,6 +154,7 @@ void GeneralConfigPane::LoadGUIValues()
 
   m_dual_core_checkbox->SetValue(startup_params.bCPUThread);
   m_cheats_checkbox->SetValue(startup_params.bEnableCheats);
+  m_disc_auto_checkbox->SetValue(startup_params.bChangeDiscsAutomatically); //gvx64
   m_force_ntscj_checkbox->SetValue(startup_params.bForceNTSCJ);
 
 #if defined(USE_ANALYTICS) && USE_ANALYTICS
@@ -175,6 +180,9 @@ void GeneralConfigPane::BindEvents()
 
   m_cheats_checkbox->Bind(wxEVT_CHECKBOX, &GeneralConfigPane::OnCheatCheckBoxChanged, this);
   m_cheats_checkbox->Bind(wxEVT_UPDATE_UI, &WxEventUtils::OnEnableIfCoreNotRunning);
+
+  m_disc_auto_checkbox->Bind(wxEVT_CHECKBOX, &GeneralConfigPane::OnDiscAutoCheckBoxChanged, this); //gvx64
+  m_disc_auto_checkbox->Bind(wxEVT_UPDATE_UI, &WxEventUtils::OnEnableIfCoreNotRunning); //gvx64
 
   m_force_ntscj_checkbox->Bind(wxEVT_CHECKBOX, &GeneralConfigPane::OnForceNTSCJCheckBoxChanged,
                                this);
@@ -203,6 +211,10 @@ void GeneralConfigPane::OnDualCoreCheckBoxChanged(wxCommandEvent& event)
 void GeneralConfigPane::OnCheatCheckBoxChanged(wxCommandEvent& event)
 {
   SConfig::GetInstance().bEnableCheats = m_cheats_checkbox->IsChecked();
+}
+void GeneralConfigPane::OnDiscAutoCheckBoxChanged(wxCommandEvent& event) //gvx64
+{
+  SConfig::GetInstance().bChangeDiscsAutomatically = m_disc_auto_checkbox->IsChecked(); //gvx64
 }
 
 void GeneralConfigPane::OnForceNTSCJCheckBoxChanged(wxCommandEvent& event)

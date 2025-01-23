@@ -8,6 +8,8 @@
 #include <vector>
 
 #include "Core/Config/Config.h"
+
+#include "Core/Config/MainSettings.h" //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
 #include "Core/Config/GraphicsSettings.h"
 
 namespace ConfigLoaders
@@ -15,6 +17,8 @@ namespace ConfigLoaders
 bool IsSettingSaveable(const Config::ConfigLocation& config_location)
 {
   const static std::vector<Config::ConfigLocation> s_setting_saveable{
+      Config::MAIN_AUTO_DISC_CHANGE.location, //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
+
       // Graphics.Hardware
 
       Config::GFX_VSYNC.location, Config::GFX_ADAPTER.location,

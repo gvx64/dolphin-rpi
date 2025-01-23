@@ -31,6 +31,7 @@ struct BootParameters
   {
     std::string path;
     std::unique_ptr<DiscIO::Volume> volume;
+    std::vector<std::string> auto_disc_change_paths; //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
   };
 
   struct Executable
@@ -59,7 +60,11 @@ struct BootParameters
     std::string dff_path;
   };
 
-  static std::unique_ptr<BootParameters> GenerateFromFile(const std::string& path);
+  static std::unique_ptr<BootParameters> 
+//gvx64  GenerateFromFile(const std::string& path);
+  GenerateFromFile(std::string boot_path);
+  static std::unique_ptr<BootParameters>
+  GenerateFromFile(std::vector<std::string> paths); //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
 
   using Parameters = std::variant<Disc, Executable, NAND, IPL, DFF>;
   BootParameters(Parameters&& parameters_);

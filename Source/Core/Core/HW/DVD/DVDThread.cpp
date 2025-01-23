@@ -217,6 +217,15 @@ IOS::ES::TicketReader GetTicket(const DiscIO::Partition& partition)
   return s_disc->GetTicket(partition);
 }
 
+bool IsInsertedDiscRunning() //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
+{
+  if (!s_disc) //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
+    return false; //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
+  WaitUntilIdle(); //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
+  return SConfig::GetInstance().GetGameID() == s_disc->GetGameID(); //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
+} //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
+
+
 bool UpdateRunningGameMetadata(const DiscIO::Partition& partition, std::optional<u64> title_id)
 {
   if (!s_disc)

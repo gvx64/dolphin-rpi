@@ -47,6 +47,7 @@
     <ClCompile Include="Boot\ElfReader.cpp" />
     <ClCompile Include="Config\Config.cpp" />
     <ClCompile Include="Config\GraphicsSettings.cpp" />
+    <ClCompile Include="Config\MainSettings.cpp" />
     <ClCompile Include="ConfigLoaders\BaseConfigLoader.cpp" />
     <ClCompile Include="ConfigLoaders\GameConfigLoader.cpp" />
     <ClCompile Include="ConfigLoaders\IsSettingSaveable.cpp" />
@@ -302,6 +303,7 @@
     <ClInclude Include="Boot\ElfTypes.h" />
     <ClInclude Include="Config\Config.h" />
     <ClInclude Include="Config\GraphicsSettings.h" />
+    <ClInclude Include="Config\MainSettings.h" />
     <ClInclude Include="ConfigLoaders\BaseConfigLoader.h" />
     <ClInclude Include="ConfigLoaders\GameConfigLoader.h" />
     <ClInclude Include="ConfigLoaders\IsSettingSaveable.h" />

@@ -111,10 +111,14 @@ void DoState(PointerWrap& p);
 
 void RegisterMMIO(MMIO::Mapping* mmio, u32 base);
 
-void SetDisc(std::unique_ptr<DiscIO::Volume> disc);
+//gvx64 void SetDisc(std::unique_ptr<DiscIO::Volume> disc);
+void SetDisc(std::unique_ptr<DiscIO::Volume> disc,
+             std::optional<std::vector<std::string>> auto_disc_change_paths); //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
 bool IsDiscInside();
 void ChangeDiscAsHost(const std::string& new_path);  // Can only be called by the host thread
+void ChangeDiscAsCPU(const std::vector<std::string>& paths);  // Must only be called on the CPU thread //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
 void ChangeDiscAsCPU(const std::string& new_path);   // Can only be called by the CPU thread
+bool AutoChangeDisc();                                   // Must only be called on the CPU thread //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
 
 // This function returns true and calls SConfig::SetRunningGameMetadata(Volume&, Partition&)
 // if both of the following conditions are true:

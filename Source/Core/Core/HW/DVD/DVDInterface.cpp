@@ -16,8 +16,11 @@
 #include "Common/Align.h"
 #include "Common/ChunkFile.h"
 #include "Common/CommonTypes.h"
+#include "Core/Config/Config.h" //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
+#include "Common/Config/Config.h" //gvx64
 #include "Common/Logging/Log.h"
 
+#include "Core/Config/MainSettings.h"  //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
 #include "Core/ConfigManager.h"
 #include "Core/Core.h"
 #include "Core/CoreTiming.h"
@@ -36,6 +39,9 @@
 #include "DiscIO/Enums.h"
 #include "DiscIO/Volume.h"
 #include "DiscIO/VolumeWii.h"
+
+
+#include "VideoCommon/OnScreenDisplay.h"  //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
 
 // The minimum time it takes for the DVD drive to process a command (in
 // microseconds)
@@ -230,12 +236,17 @@ static u64 s_read_buffer_end_offset;
 
 // Disc changing
 static std::string s_disc_path_to_insert;
+static std::vector<std::string> s_auto_disc_change_paths;  //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
+static size_t s_auto_disc_change_index;  //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
 
 // Events
 static CoreTiming::EventType* s_finish_executing_command;
+static CoreTiming::EventType* s_auto_change_disc;  //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
 static CoreTiming::EventType* s_eject_disc;
 static CoreTiming::EventType* s_insert_disc;
 
+
+static void AutoChangeDiscCallback(u64 userdata, s64 cyclesLate); //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
 static void EjectDiscCallback(u64 userdata, s64 cyclesLate);
 static void InsertDiscCallback(u64 userdata, s64 cyclesLate);
 static void FinishExecutingCommandCallback(u64 userdata, s64 cycles_late);
@@ -388,6 +399,7 @@ void Init()
   Reset();
   s_DICVR.Hex = 1;  // Disc Channel relies on cover being open when no disc is inserted
 
+  s_auto_change_disc = CoreTiming::RegisterEvent("AutoChangeDisc", AutoChangeDiscCallback);  //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
   s_eject_disc = CoreTiming::RegisterEvent("EjectDisc", EjectDiscCallback);
   s_insert_disc = CoreTiming::RegisterEvent("InsertDisc", InsertDiscCallback);
 
@@ -437,10 +449,21 @@ void Shutdown()
   DVDThread::Stop();
 }
 
-void SetDisc(std::unique_ptr<DiscIO::Volume> disc)
+//gvx64 void SetDisc(std::unique_ptr<DiscIO::Volume> disc)
+void SetDisc(std::unique_ptr<DiscIO::Volume> disc,
+             std::optional<std::vector<std::string>> auto_disc_change_paths = {})  //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
 {
   if (disc)
     s_current_partition = disc->GetGamePartition();
+
+  if (auto_disc_change_paths)  //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
+  {
+    _assert_msg_(DISCIO, (*auto_disc_change_paths).size() != 1,
+               "Cannot automatically change between one disc");  //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
+    s_auto_disc_change_paths = *auto_disc_change_paths;  //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
+    s_auto_disc_change_index = 0;  //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
+  }
+
 
   DVDThread::SetDisc(std::move(disc));
   SetLidOpen();
@@ -451,13 +474,19 @@ bool IsDiscInside()
   return DVDThread::HasDisc();
 }
 
+static void AutoChangeDiscCallback(u64 userdata, s64 cyclesLate) //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
+{
+  AutoChangeDisc(); //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
+}
+
 // Take care of all logic of "swapping discs"
 // We want this in the "backend", NOT the gui
 // any !empty string will be deleted to ensure
 // that the userdata string exists when called
 static void EjectDiscCallback(u64 userdata, s64 cyclesLate)
 {
-  SetDisc(nullptr);
+//gvx64  SetDisc(nullptr);
+  SetDisc(nullptr, {});  //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
 }
 
 static void InsertDiscCallback(u64 userdata, s64 cyclesLate)
@@ -466,7 +495,10 @@ static void InsertDiscCallback(u64 userdata, s64 cyclesLate)
       DiscIO::CreateVolumeFromFilename(s_disc_path_to_insert);
 
   if (new_volume)
-    SetDisc(std::move(new_volume));
+  {
+//gvx64    SetDisc(std::move(new_volume));
+    SetDisc(std::move(new_volume), {});  //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
+  }
   else
     PanicAlertT("The disc that was about to be inserted couldn't be found.");
 
@@ -484,6 +516,20 @@ void ChangeDiscAsHost(const std::string& new_path)
   Core::PauseAndLock(false, was_unpaused);
 }
 
+// Must only be called on the CPU thread
+void ChangeDiscAsCPU(const std::vector<std::string>& paths)
+{
+//gvx64  ASSERT_MSG(DISCIO, !paths.empty(), "Trying to insert an empty list of discs");
+  _assert_msg_(LogTypes::DISCIO, !paths.empty(), "Trying to insert an empty list of discs"); //gvx64
+  if (paths.size() > 1)
+  {
+    s_auto_disc_change_paths = paths;
+    s_auto_disc_change_index = 0;
+  }
+  ChangeDiscAsCPU(paths[0]); //gvx64
+}
+
+
 // Can only be called by the CPU thread
 void ChangeDiscAsCPU(const std::string& new_path)
 {
@@ -498,6 +544,27 @@ void ChangeDiscAsCPU(const std::string& new_path)
   CoreTiming::ScheduleEvent(SystemTimers::GetTicksPerSecond(), s_insert_disc);
 
   Movie::SignalDiscChange(new_path);
+
+  for (size_t i = 0; i < s_auto_disc_change_paths.size(); ++i)  //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
+  {  //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
+    if (s_auto_disc_change_paths[i] == new_path)  //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
+    {  //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
+      s_auto_disc_change_index = i;  //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
+      return;  //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
+    }  //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
+  }  //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
+  s_auto_disc_change_paths.clear();  //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
+}  //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
+
+// Must only be called on the CPU thread 
+bool AutoChangeDisc()  //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
+{  //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
+  if (s_auto_disc_change_paths.empty())  //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
+    return false;  //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
+  s_auto_disc_change_index = (s_auto_disc_change_index + 1) % s_auto_disc_change_paths.size();  //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
+  ChangeDiscAsCPU(s_auto_disc_change_paths[s_auto_disc_change_index]);  //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
+  return true;  //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
+
 }
 
 void SetLidOpen()
@@ -989,12 +1056,25 @@ void ExecuteCommand(u32 command_0, u32 command_1, u32 command_2, u32 output_addr
   break;
 
   case DVDLowStopMotor:
+  {  //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
     INFO_LOG(DVDINTERFACE, "DVDLowStopMotor %s %s", command_1 ? "eject" : "",
              command_2 ? "kill!" : "");
 
-    if (command_1 && !command_2)
+//gvx64    if (command_1 && !command_2)
+    const bool force_eject = command_1 && !command_2;  //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
+    if (Config::Get(Config::MAIN_AUTO_DISC_CHANGE) && !Movie::IsPlayingInput() &&  //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
+        DVDThread::IsInsertedDiscRunning() && !s_auto_disc_change_paths.empty())  //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
+    {  //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
+      CoreTiming::ScheduleEvent(force_eject ? 0 : SystemTimers::GetTicksPerSecond() / 2,  //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
+                                s_auto_change_disc);  //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
+      OSD::AddMessage("Changing discs automatically...", OSD::Duration::NORMAL);  //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
+    }  //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
+    else if (force_eject)  //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
+    {  //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
       EjectDiscCallback(0, 0);
+    }  //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
     break;
+  }  //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
 
   // DVD Audio Enable/Disable (Immediate). GC uses this, and apparently Wii also does...?
   case DVDLowAudioBufferConfig:

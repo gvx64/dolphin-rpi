@@ -10,6 +10,7 @@
 #include <string>
 #include <thread>
 #include <unistd.h>
+#include <iostream> //gvx64
 
 #include "Common/CommonTypes.h"
 #include "Common/Event.h"
@@ -383,6 +384,11 @@ int main(int argc, char* argv[])
   if (options.is_set("exec"))
   {
     boot_filename = static_cast<const char*>(options.get("exec"));
+//gvx    const std::list<std::string> paths_list = options.all("exec"); //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
+//gvx    const std::vector<std::string> paths{std::make_move_iterator(std::begin(paths_list)), //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
+//gvx                                         std::make_move_iterator(std::end(paths_list))}; //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
+//gvx    boot_filename_exec = paths; //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
+//gvx64    printf("../Source/Core/DolphinNoGUI/MainNoGUI.cpp, main, paths_list begin = %s\n", boot_filename.c_str());//paths_list.front().c_str() ); //gvx64
   }
   else if (args.size())
   {
@@ -429,6 +435,8 @@ int main(int argc, char* argv[])
     fprintf(stderr, "Could not boot %s\n", boot_filename.c_str());
     return 1;
   }
+
+//gvx64    printf("../Source/Core/DolphinNoGUI/MainNoGUI.cpp, main, paths_list begin = %s\n", boot_filename.c_str());//paths_list.front().c_str() ); //gvx64
 
   while (!Core::IsRunning() && s_running.IsSet())
   {

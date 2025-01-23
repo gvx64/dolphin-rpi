@@ -72,6 +72,7 @@ private:
   bool valid;
   bool bCPUThread;
   bool bEnableCheats;
+  bool bChangeDiscsAutomatically; //gvx64
   bool bSyncGPUOnSkipIdleHack;
   bool bFPRF;
   bool bAccurateNaNs;
@@ -106,6 +107,7 @@ void ConfigCache::SaveConfig(const SConfig& config)
 
   bCPUThread = config.bCPUThread;
   bEnableCheats = config.bEnableCheats;
+  bChangeDiscsAutomatically = config.bChangeDiscsAutomatically; //gvx64
   bSyncGPUOnSkipIdleHack = config.bSyncGPUOnSkipIdleHack;
   bFPRF = config.bFPRF;
   bAccurateNaNs = config.bAccurateNaNs;
@@ -149,6 +151,7 @@ void ConfigCache::RestoreConfig(SConfig* config)
 
   config->bCPUThread = bCPUThread;
   config->bEnableCheats = bEnableCheats;
+  config->bChangeDiscsAutomatically = bChangeDiscsAutomatically; //gvx64
   config->bSyncGPUOnSkipIdleHack = bSyncGPUOnSkipIdleHack;
   config->bFPRF = bFPRF;
   config->bAccurateNaNs = bAccurateNaNs;
@@ -256,6 +259,7 @@ bool BootCore(std::unique_ptr<BootParameters> boot)
 
     core_section->Get("CPUThread", &StartUp.bCPUThread, StartUp.bCPUThread);
     core_section->Get("EnableCheats", &StartUp.bEnableCheats, StartUp.bEnableCheats);
+    core_section->Get("Change Discs Automatically", &StartUp.bChangeDiscsAutomatically, StartUp.bChangeDiscsAutomatically); //gvx64
     core_section->Get("SyncOnSkipIdle", &StartUp.bSyncGPUOnSkipIdleHack,
                       StartUp.bSyncGPUOnSkipIdleHack);
     core_section->Get("FPRF", &StartUp.bFPRF, StartUp.bFPRF);
@@ -360,6 +364,7 @@ bool BootCore(std::unique_ptr<BootParameters> boot)
     Config::AddLoadLayer(ConfigLoaders::GenerateNetPlayConfigLoader(g_NetPlaySettings));
     StartUp.bCPUThread = g_NetPlaySettings.m_CPUthread;
     StartUp.bEnableCheats = g_NetPlaySettings.m_EnableCheats;
+    StartUp.bChangeDiscsAutomatically = g_NetPlaySettings.m_ChangeDiscsAutomatically; //gvx64
     StartUp.bDSPHLE = g_NetPlaySettings.m_DSPHLE;
     StartUp.bEnableMemcardSdWriting = g_NetPlaySettings.m_WriteToMemcard;
     StartUp.bCopyWiiSaveNetplay = g_NetPlaySettings.m_CopyWiiSave;

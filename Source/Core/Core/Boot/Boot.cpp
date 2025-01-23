@@ -4,6 +4,13 @@
 
 #include "Core/Boot/Boot.h"
 
+
+#ifdef _MSC_VER //gvx64 roll-forward to 5.0-9343 to introduce m3u support
+#include <experimental/filesystem> //gvx64 roll-forward to 5.0-9343 to introduce m3u support
+namespace fs = std::experimental::filesystem; //gvx64 roll-forward to 5.0-9343 to introduce m3u support
+#define HAS_STD_FILESYSTEM //gvx64 roll-forward to 5.0-9343 to introduce m3u support
+#endif //gvx64 roll-forward to 5.0-9343 to introduce m3u support
+
 #include <algorithm>
 #include <memory>
 #include <optional>
@@ -13,6 +20,7 @@
 
 #include <zlib.h>
 
+#include "Common/Assert.h" //gvx64 roll-forward to 5.0-9343 to introduce m3u file support
 #include "Common/Align.h"
 #include "Common/CDUtils.h"
 #include "Common/CommonPaths.h"
@@ -43,28 +51,101 @@
 #include "DiscIO/NANDContentLoader.h"
 #include "DiscIO/Volume.h"
 
+//gvx64 roll-forward to 5.0-9343 to introduce m3u support
+std::vector<std::string> ReadM3UFile(const std::string& m3u_path, const std::string& folder_path)
+{
+#ifndef HAS_STD_FILESYSTEM
+  _assert_(folder_path.back() == '/');
+#endif
+  std::vector<std::string> result;
+  std::vector<std::string> nonexistent;
+  std::ifstream s;
+  File::OpenFStream(s, m3u_path, std::ios_base::in);
+  std::string line;
+  while (std::getline(s, line))
+  {
+    if (StringBeginsWith(line, u8"\uFEFF"))
+    {
+      WARN_LOG(BOOT, "UTF-8 BOM in file: %s", m3u_path.c_str());
+      line.erase(0, 3);
+    }
+    if (!line.empty() && line.front() != '#')  // Comments start with #
+    {
+#ifdef HAS_STD_FILESYSTEM
+      const fs::path path_line = fs::u8path(line);
+      const std::string path_to_add =
+          path_line.is_relative() ? fs::u8path(folder_path).append(path_line).u8string() : line;
+#else
+      const std::string path_to_add = line.front() != '/' ? folder_path + line : line;
+#endif
+      (File::Exists(path_to_add) ? result : nonexistent).push_back(path_to_add);
+    }
+  }
+  if (!nonexistent.empty())
+  {
+    PanicAlertT("Files specified in the M3U file \"%s\" were not found:\n%s", m3u_path.c_str(),
+                JoinStrings(nonexistent, "\n").c_str());
+    return {};
+  }
+  if (result.empty())
+    PanicAlertT("No paths found in the M3U file \"%s\"", m3u_path.c_str());
+  return result;
+}
+//gvx64 roll-forward to 5.0-9343 to introduce m3u support
+
 BootParameters::BootParameters(Parameters&& parameters_) : parameters(std::move(parameters_))
 {
 }
 
-std::unique_ptr<BootParameters> BootParameters::GenerateFromFile(const std::string& path)
+std::unique_ptr<BootParameters> 
+//gvx64 BootParameters::GenerateFromFile(const std::string& path)
+BootParameters::GenerateFromFile(std::string boot_path) //gvx64 roll-forward to 5.0-9343 to introduce m3u support
 {
-  const bool is_drive = cdio_is_cdrom(path);
+//gvx64  const bool is_drive = cdio_is_cdrom(path);
+  return GenerateFromFile(std::vector<std::string>{std::move(boot_path)}); //gvx64 roll-forward to 5.0-9343 to introduce m3u support
+}
+
+std::unique_ptr<BootParameters>
+BootParameters::GenerateFromFile(std::vector<std::string> paths)
+{
+//gvx64  printf("../Source/Core/Core/Boot/Boot.cpp, GenerateFromFile, paths.front().c_str() - %s \n", paths.front().c_str()); //gvx64
+  _assert_(!paths.empty());
+  const bool is_drive = cdio_is_cdrom(paths.front());
+
   // Check if the file exist, we may have gotten it from a --elf command line
   // that gave an incorrect file name
-  if (!is_drive && !File::Exists(path))
+//gvx64  if (!is_drive && !File::Exists(path))
+  if (!is_drive && !File::Exists(paths.front())) //gvx64 roll-forward to 5.0-9343 to introduce m3u support
   {
-    PanicAlertT("The specified file \"%s\" does not exist", path.c_str());
+//gvx64    PanicAlertT("The specified file \"%s\" does not exist", path.c_str());
+    PanicAlertT("The specified file \"%s\" does not exist", paths.front().c_str()); //gvx64 roll-forward to 5.0-9343 to introduce m3u support
     return {};
   }
 
+  std::string folder_path; //gvx64 roll-forward to 5.0-9343 to introduce m3u support
   std::string extension;
-  SplitPath(path, nullptr, nullptr, &extension);
+//gvx64  SplitPath(path, nullptr, nullptr, &extension);
+  SplitPath(paths.front(), &folder_path, nullptr, &extension); //gvx64 roll-forward to 5.0-9343 to introduce m3u support
   std::transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
+
+
+//gvx64 roll-forward to 5.0-9343 to introduce m3u support
+  if (extension == ".m3u" || extension == ".m3u8")
+  {
+    paths = ReadM3UFile(paths.front(), folder_path);
+    if (paths.empty())
+      return {};
+    SplitPath(paths.front(), nullptr, nullptr, &extension);
+    std::transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
+  }
+  const std::string path = paths.front();
+  if (paths.size() == 1)
+    paths.clear();
+//gvx64 roll-forward to 5.0-9343 to introduce m3u support
 
   static const std::unordered_set<std::string> disc_image_extensions = {
 //gvx64      {".gcm", ".iso", ".tgc", ".wbfs", ".ciso", ".gcz"}};
-      {".gcm", ".iso", ".tgc", ".wbfs", ".ciso", ".gcz", ".wia", ".rvz",}}; //gvx64 rollforward to 5.0-12188 - implement .rvz support
+      {".gcm", ".iso", ".tgc", ".wbfs", ".ciso", ".gcz", ".wia", ".rvz", ".m3u"}}; //gvx64 rollforward to 5.0-12188 - implement .rvz support
   if (disc_image_extensions.find(extension) != disc_image_extensions.end() || is_drive)
   {
     auto volume = DiscIO::CreateVolumeFromFilename(path);
@@ -84,17 +165,28 @@ std::unique_ptr<BootParameters> BootParameters::GenerateFromFile(const std::stri
       }
       return {};
     }
-    return std::make_unique<BootParameters>(Disc{path, std::move(volume)});
+//gvx64    return std::make_unique<BootParameters>(Disc{path, std::move(volume)});
+      return std::make_unique<BootParameters>(Disc{std::move(path), std::move(volume), paths}); //gvx64 roll-forward to 5.0-9343 to introduce m3u support
   }
 
   if (extension == ".elf")
-    return std::make_unique<BootParameters>(Executable{path, std::make_unique<ElfReader>(path)});
+  {
+//gvx64    return std::make_unique<BootParameters>(Executable{path, std::make_unique<ElfReader>(path)});
+    return std::make_unique<BootParameters>(
+      Executable{std::move(path), std::make_unique<ElfReader>(path)}); //gvx64 roll-forward to 5.0-9343 to introduce m3u support
+  }
 
   if (extension == ".dol")
-    return std::make_unique<BootParameters>(Executable{path, std::make_unique<DolReader>(path)});
-
+  {
+//gvx64    return std::make_unique<BootParameters>(Executable{path, std::make_unique<DolReader>(path)});
+    return std::make_unique<BootParameters>( 
+      Executable{std::move(path), std::make_unique<DolReader>(path)});  //gvx64 roll-forward to 5.0-9343 to introduce m3u support
+  }
   if (extension == ".dff")
-    return std::make_unique<BootParameters>(DFF{path});
+  {
+//gvx64    return std::make_unique<BootParameters>(DFF{path});
+    return std::make_unique<BootParameters>(DFF{std::move(path)}); //gvx64 roll-forward to 5.0-9343 to introduce m3u support
+  }
 
   if (DiscIO::NANDContentManager::Access().GetNANDLoader(path).IsValid())
     return std::make_unique<BootParameters>(NAND{path});
@@ -117,10 +209,13 @@ BootParameters::IPL::IPL(DiscIO::Region region_, Disc&& disc_) : IPL(region_)
 // Inserts a disc into the emulated disc drive and returns a pointer to it.
 // The returned pointer must only be used while we are still booting,
 // because DVDThread can do whatever it wants to the disc after that.
-static const DiscIO::Volume* SetDisc(std::unique_ptr<DiscIO::Volume> volume)
+//gvx64 static const DiscIO::Volume* SetDisc(std::unique_ptr<DiscIO::Volume> volume)
+static const DiscIO::Volume* SetDisc(std::unique_ptr<DiscIO::Volume> volume,
+                                     std::vector<std::string> auto_disc_change_paths = {}) //gvx64 roll-forward to 5.0-9343 to introduce m3u support
 {
   const DiscIO::Volume* pointer = volume.get();
-  DVDInterface::SetDisc(std::move(volume));
+//gvx64  DVDInterface::SetDisc(std::move(volume));
+  DVDInterface::SetDisc(std::move(volume), auto_disc_change_paths); //gvx64 roll-forward to 5.0-9343 to introduce m3u support
   return pointer;
 }
 
@@ -337,7 +432,8 @@ bool CBoot::BootUp(std::unique_ptr<BootParameters> boot)
     bool operator()(BootParameters::Disc& disc) const
     {
       NOTICE_LOG(BOOT, "Booting from disc: %s", disc.path.c_str());
-      const DiscIO::Volume* volume = SetDisc(std::move(disc.volume));
+//gvx64      const DiscIO::Volume* volume = SetDisc(std::move(disc.volume));
+      const DiscIO::Volume* volume = SetDisc(std::move(disc.volume), disc.auto_disc_change_paths); //gvx64 roll-forward to 5.0-9343 to introduce m3u support
 
       if (!volume)
         return false;
@@ -438,7 +534,8 @@ bool CBoot::BootUp(std::unique_ptr<BootParameters> boot)
       if (ipl.disc)
       {
         NOTICE_LOG(BOOT, "Inserting disc: %s", ipl.disc->path.c_str());
-        SetDisc(DiscIO::CreateVolumeFromFilename(ipl.disc->path));
+//gvx64        SetDisc(DiscIO::CreateVolumeFromFilename(ipl.disc->path));
+        SetDisc(DiscIO::CreateVolumeFromFilename(ipl.disc->path), ipl.disc->auto_disc_change_paths); //gvx64 roll-forward to 5.0-9343 to introduce m3u support
       }
 
       if (LoadMapFromFilename())
