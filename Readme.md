@@ -1,4 +1,4 @@
-GVX64 - Dolphin-Rpi-5.0-4544
+xGVX64 - Dolphin-Rpi-5.0-4544
 
 This is a fork of dolphin-emu that rolls back to commit 5.0-4544 (June 2017) 
 and implements numerous changes intended to resolve the rendering issue due 
@@ -83,9 +83,11 @@ Begin by adding the following line to /home/pi/DolphinConfig5.0/Config/Dolphin.i
 	AutoDiscChange = True
 
 Next, create an m3u file using a text editor such as nano in your /home/pi/RetroPie/roms/gc/ directory with the name of the multi-disc game:
+
 	BatenKaitosEternalWings.m3u
 
 Populate the m3u file with the name of the individual game files similar to as shown below (note: do not use quotations or escape characters in the filename):
+
 	BatenKaitosEternalWingsDisc01.rvz
 	BatenKaitosEternalWingsDisc02.rvz
 
